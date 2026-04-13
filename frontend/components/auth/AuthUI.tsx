@@ -12,7 +12,7 @@ type AuthShellProps = {
 export function AuthShell({ children, showBrand = true, showMenu = true }: AuthShellProps) {
     return (
         <main className="min-h-screen bg-[radial-gradient(120%_100%_at_50%_-8%,#cfe9cd_0%,rgba(207,233,205,0)_60%),linear-gradient(180deg,#f5f7f5_0%,#eef3ef_100%)] px-4 py-5 sm:px-8 sm:py-8">
-            <section className="mx-auto w-full max-w-[760px] overflow-hidden rounded-[28px] border border-[#e4ebe5] bg-[#f7f9f7] shadow-[0_24px_70px_rgba(10,26,14,0.24)] animate-fade-in">
+            <section className="mx-auto w-full max-w-190 overflow-hidden rounded-[28px] border border-[#e4ebe5] bg-[#f7f9f7] shadow-[0_24px_70px_rgba(10,26,14,0.24)] animate-fade-in">
                 <header className="flex items-center justify-between border-b border-[#dde5df] px-5 py-4 sm:px-6 sm:py-5">
                     {showBrand ? <Brand /> : <div />}
                     {showMenu ? (
@@ -69,7 +69,7 @@ export function AuthInput({
     trailing?: ReactNode
 }) {
     return (
-        <label className="flex min-h-14 w-full items-center gap-2 rounded-2xl border-2 border-[#dde3e7] bg-white px-4 text-[#4b5563] transition focus-within:border-[#8fba73] focus-within:ring-4 focus-within:ring-[#81bc5c33] sm:min-h-[62px] sm:px-5">
+        <label className="flex min-h-14 w-full items-center gap-2 rounded-2xl border-2 border-[#dde3e7] bg-white px-4 text-[#4b5563] transition focus-within:border-[#8fba73] focus-within:ring-4 focus-within:ring-[#81bc5c33] sm:min-h-15.5 sm:px-5">
             <Icon className="shrink-0 text-[#97a1ae]" size={22} strokeWidth={2} />
             <input
                 type={type}
@@ -95,7 +95,7 @@ export function AuthField({
     trailing?: ReactNode
 }) {
     return (
-        <div className="mb-5 sm:mb-[22px]">
+        <div className="mb-5 sm:mb-5.5">
             <p className="mb-2.5 text-[1.1rem] font-semibold text-[#1d6b3f] sm:text-[1.42rem]">{label}</p>
             <AuthInput icon={icon} placeholder={placeholder} type={type} trailing={trailing} />
         </div>
@@ -107,7 +107,7 @@ export function AuthButton({ children, className }: { children: ReactNode; class
         <button
             type="button"
             className={cn(
-                'mt-1 min-h-14 w-full rounded-full bg-gradient-to-b from-[#5c9a34] to-[#4f9132] px-6 text-[1.55rem] font-bold text-[#f8fff5] shadow-[0_10px_24px_rgba(78,146,53,0.26)] transition hover:brightness-[1.02] active:translate-y-[1px] sm:min-h-[68px] sm:text-[2rem]',
+                'mt-1 min-h-14 w-full rounded-full bg-linear-to-b from-[#5c9a34] to-[#4f9132] px-6 text-[1.55rem] font-bold text-[#f8fff5] shadow-[0_10px_24px_rgba(78,146,53,0.26)] transition hover:brightness-[1.02] active:translate-y-px sm:min-h-17 sm:text-[2rem]',
                 className
             )}
         >

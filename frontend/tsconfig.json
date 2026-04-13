@@ -22,17 +22,18 @@
       "react",
       "react-dom"
     ],
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    // "baseUrl": ".",
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "ignoreDeprecations": "6.0",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
