@@ -19,9 +19,9 @@ export default function EarningsCard({
           <div>
             <p className="text-base text-slate-500 sm:text-lg">Your Earnings</p>
             <h3 className="text-[1.9rem] font-bold tracking-tight text-slate-900 sm:text-[2.2rem]">
-              {totalEarnings.toLocaleString("en-US", {
+              {totalEarnings.toLocaleString("en-NG", {
                 style: "currency",
-                currency: "USD",
+                currency: "NGN",
                 maximumFractionDigits: 0,
               })}
             </h3>
