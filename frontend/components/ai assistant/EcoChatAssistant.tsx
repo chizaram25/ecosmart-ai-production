@@ -156,7 +156,7 @@ export default function EcoChatAssistant() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything eco-related..."
             disabled={loading}
-            className="max-h-28 min-h-[48px] flex-1 resize-none rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#1f6f33] focus:ring-2 focus:ring-[#1f6f33]/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="max-h-28 min-h-12 flex-1 resize-none rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#1f6f33] focus:ring-2 focus:ring-[#1f6f33]/20 disabled:cursor-not-allowed disabled:opacity-60"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
