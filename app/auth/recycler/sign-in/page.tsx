@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  Globe, Eye, EyeOff, CheckCircle2, Recycle
+  Globe, Eye, EyeOff, AlertCircle, Recycle
 } from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { setToken, setUser } from '@/lib/auth';
 
 export default function RecyclerSignInPage() {
   const router = useRouter();
@@ -20,22 +22,43 @@ export default function RecyclerSignInPage() {
 
   // Validation State
   const [isFormValid, setIsFormValid] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Validation Effect
   useEffect(() => {
-    // Basic validation: identifier must be at least 5 characters (could be email or phone)
-    // and password must be at least 6 characters
     const isValid = identifier.trim().length >= 5 && password.length >= 6;
     setIsFormValid(isValid);
   }, [identifier, password]);
 
   // Handle Login
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isFormValid || loading) return;
 
-    // Navigate to recycler dashboard
-    router.push('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await authApi.login(identifier, password);
+      if (result.token) {
+        setToken(result.token);
+        if (result.user) setUser(result.user);
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+
+      if (message.toLowerCase().includes('invalid email')) {
+        setError('Invalid email');
+      } else if (message.toLowerCase().includes('phone')) {
+        setError('Phone number does not exist');
+      } else {
+        setError(message || 'Invalid email or password');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +76,7 @@ export default function RecyclerSignInPage() {
          </svg>
       </div>
 
-      {/* Header - Full Width Spread */}
+      {/* Header */}
       <header className="relative z-20 w-full flex justify-between items-center px-6 md:px-12 lg:px-24 pt-6 pb-4">
         <Link href="/" className="flex items-center gap-2 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full">
           <Image
@@ -71,7 +94,7 @@ export default function RecyclerSignInPage() {
         </button>
       </header>
 
-      {/* Main Content Area - Expands on desktop */}
+      {/* Main Content Area */}
       <main className="relative z-10 flex-grow w-full max-w-4xl mx-auto px-6 md:px-12 lg:px-16 pt-4 md:pt-16 pb-20 flex flex-col items-center">
 
         {/* Title Section */}
@@ -80,7 +103,7 @@ export default function RecyclerSignInPage() {
             Welcome Back
           </h1>
           <p className="text-[14px] md:text-lg text-gray-500 font-medium px-4">
-            Sign in to continue
+            Sign in to your recycler account
           </p>
         </div>
 
@@ -105,14 +128,22 @@ export default function RecyclerSignInPage() {
 
           <form className="w-full flex flex-col gap-5 md:gap-6" onSubmit={handleLogin}>
 
+            {/* Error Banner */}
+            {error && (
+              <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            )}
+
             {/* Email or Phone Number */}
             <div className="w-full">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Email or Phone Number</label>
-              <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 md:py-4 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+              <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 md:py-4 bg-white transition-colors shadow-sm ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                 <input
                   type="text"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
                   placeholder="Enter your email or phone number"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
@@ -122,11 +153,11 @@ export default function RecyclerSignInPage() {
             {/* Password */}
             <div className="w-full">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Password</label>
-              <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 md:py-4 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+              <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 md:py-4 bg-white transition-colors shadow-sm ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Enter your password"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
@@ -147,17 +178,17 @@ export default function RecyclerSignInPage() {
               </Link>
             </div>
 
-            {/* Dynamic Submit Button */}
+            {/* Submit Button */}
             <div className="mt-4 w-full">
               <button
-                disabled={!isFormValid}
+                disabled={!isFormValid || loading}
                 className={`w-full py-4 md:py-4 rounded-full font-semibold text-[16px] md:text-[17px] transition-all duration-300 ${
-                  isFormValid
+                  isFormValid && !loading
                     ? 'bg-[#549B45] text-white shadow-lg shadow-green-900/20 hover:bg-[#458237] hover:-translate-y-0.5 cursor-pointer'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Login
+                {loading ? 'Signing in...' : 'Login'}
               </button>
             </div>
 
@@ -179,7 +210,6 @@ export default function RecyclerSignInPage() {
                 </svg>
                 <span className="text-[14px] md:text-[15px] font-medium text-gray-700">Google</span>
               </button>
-
               <button type="button" className="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-full hover:bg-gray-50 hover:shadow-sm transition-all cursor-pointer bg-white">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.05 20.28c-.98.95-2.05 1.8-3.08 1.8-1.09 0-1.44-.65-2.73-.65-1.25 0-1.68.61-2.68.61-1.09 0-2.26-.95-3.26-2.04C3.12 17.51 1.7 13.9 3.12 11.02c.68-1.39 2.05-2.3 3.52-2.34 1.13-.04 2.21.78 2.87.78.68 0 1.96-.95 3.31-.83 1.41.04 2.68.65 3.41 1.74-2.95 1.7-2.45 6.09.43 7.22-.63 1.57-1.57 3.04-2.61 4.27v.04zm-1.87-14.73c.61-.78 1.04-1.91.87-3.04-1.04.04-2.17.65-2.87 1.48-.56.65-1.04 1.83-.87 2.91 1.13.09 2.26-.52 2.87-1.35z"/>

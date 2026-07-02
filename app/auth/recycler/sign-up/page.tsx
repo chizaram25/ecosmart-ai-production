@@ -8,9 +8,6 @@ import {
 } from 'lucide-react';
 
 export default function RecyclerSignUpPage() {
-  // Account Type State
-  const [isIndividual, setIsIndividual] = useState(false);
-
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,14 +19,18 @@ export default function RecyclerSignUpPage() {
   // UI State
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [phoneTouched, setPhoneTouched] = useState(false);
 
-  // Field Validation States
+  // Touched State
+  const [nameTouched, setNameTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
+
+  // Validation States
   const [isNameValid, setIsNameValid] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isPhoneValid, setIsPhoneValid] = useState(false);
-
-  // Password Strength States
   const [hasLength, setHasLength] = useState(false);
   const [hasUpper, setHasUpper] = useState(false);
   const [hasNumberOrSpecial, setHasNumberOrSpecial] = useState(false);
@@ -41,22 +42,18 @@ export default function RecyclerSignUpPage() {
 
   // Real-time Validation Effect
   useEffect(() => {
-    // 1. Name Validation
     const nameValid = name.trim().length >= 3;
     setIsNameValid(nameValid);
 
-    // 2. Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const emailValid = emailRegex.test(email);
     setIsEmailValid(emailValid);
 
-    // 3. Phone Validation (10 digits after +234)
     const phoneRegex = /^\d{10}$/;
     const cleanPhone = phone.replace(/\s/g, '');
     const phoneValid = phoneRegex.test(cleanPhone);
     setIsPhoneValid(phoneValid);
 
-    // 4. Password Strength Validation
     const lengthValid = password.length >= 8;
     const upperValid = /[A-Z]/.test(password);
     const numOrSpecialValid = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -68,15 +65,13 @@ export default function RecyclerSignUpPage() {
     const passValid = lengthValid && upperValid && numOrSpecialValid;
     setIsPasswordValid(passValid);
 
-    // 5. Confirm Password
     const confirmMatch = password === confirmPassword && confirmPassword.length > 0;
     setIsConfirmValid(confirmMatch);
 
-    // Overall Form Validation
     setIsFormValid(nameValid && emailValid && phoneValid && passValid && confirmMatch && agreed);
   }, [name, email, phone, password, confirmPassword, agreed]);
 
-  // Password Strength Score (0 to 4)
+  // Password Strength
   const getStrengthScore = () => {
     if (password.length === 0) return 0;
     let score = 1;
@@ -96,6 +91,18 @@ export default function RecyclerSignUpPage() {
   };
 
   const strength = getStrengthDisplay();
+
+  // Determine which error to show (first invalid touched field)
+  const getFieldError = () => {
+    if (nameTouched && !isNameValid) return { field: 'name', message: 'Business name is required' };
+    if (emailTouched && !isEmailValid) return { field: 'email', message: email.length > 0 ? 'Invalid email' : 'Email is required' };
+    if (phoneTouched && !isPhoneValid) return { field: 'phone', message: phone.length > 0 ? 'Enter a valid 10-digit number' : 'Phone is required' };
+    if (passwordTouched && !isPasswordValid) return { field: 'password', message: 'At least 8 characters, one uppercase, one number/special' };
+    if (confirmTouched && !isConfirmValid) return { field: 'confirm', message: password.length === 0 ? 'Confirm your password' : 'Passwords do not match' };
+    return null;
+  };
+
+  const fieldError = getFieldError();
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col relative overflow-hidden">
@@ -154,47 +161,58 @@ export default function RecyclerSignUpPage() {
 
           <form className="w-full" onSubmit={(e) => e.preventDefault()}>
 
-            {/* Responsive Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 
               {/* Business Name */}
               <div>
-                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
-                  Business Name
-                </label>
-                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
-                  <User className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Business Name</label>
+                <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${fieldError?.field === 'name' ? 'border-red-400' : isNameValid && nameTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                  <User className={`w-5 h-5 mr-3 shrink-0 ${fieldError?.field === 'name' ? 'text-red-400' : 'text-gray-400'}`} />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onBlur={() => setNameTouched(true)}
                     placeholder="Eco Waste Ltd."
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
-                  {isNameValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
+                  {isNameValid && nameTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
                 </div>
+                {fieldError?.field === 'name' && (
+                  <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {fieldError.message}
+                  </p>
+                )}
               </div>
 
               {/* Email Address */}
               <div>
                 <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Email Address</label>
-                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
-                  <Mail className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${fieldError?.field === 'email' ? 'border-red-400' : isEmailValid && emailTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                  <Mail className={`w-5 h-5 mr-3 shrink-0 ${fieldError?.field === 'email' ? 'text-red-400' : 'text-gray-400'}`} />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setEmailTouched(true)}
                     placeholder="example@mail.com"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
-                  {isEmailValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
+                  {isEmailValid && emailTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
                 </div>
+                {fieldError?.field === 'email' && (
+                  <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {fieldError.message}
+                  </p>
+                )}
               </div>
 
               {/* Phone Number */}
               <div className="md:col-span-2 w-full">
                 <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Phone Number</label>
-                <div className={`relative flex items-center border rounded-2xl bg-white overflow-hidden transition-colors shadow-sm ${!isPhoneValid && phoneTouched ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                <div className={`relative flex items-center border rounded-2xl bg-white overflow-hidden transition-colors shadow-sm ${fieldError?.field === 'phone' ? 'border-red-400' : isPhoneValid && phoneTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                   <div className="flex items-center gap-2 px-4 py-3.5 bg-white border-r border-gray-200 shrink-0">
                     <div className="w-5 h-3.5 bg-green-600 rounded-[2px] relative overflow-hidden flex shadow-sm">
                       <div className="w-1/3 h-full bg-green-600"></div>
@@ -214,15 +232,13 @@ export default function RecyclerSignUpPage() {
                     placeholder="901 234 5678"
                     className="w-full px-4 py-3.5 outline-none text-[14px] md:text-[15px] text-gray-900 bg-transparent"
                   />
-                  {isPhoneValid && <Check className="w-5 h-5 text-[#449339] mr-4 shrink-0 animate-in zoom-in" />}
-                  {!isPhoneValid && phoneTouched && (
-                    <AlertCircle className="w-5 h-5 text-red-500 mr-4 shrink-0" />
-                  )}
+                  {isPhoneValid && phoneTouched && <Check className="w-5 h-5 text-[#449339] mr-4 shrink-0 animate-in zoom-in" />}
+                  {fieldError?.field === 'phone' && <AlertCircle className="w-5 h-5 text-red-500 mr-4 shrink-0" />}
                 </div>
-                {!isPhoneValid && phoneTouched && phone.length > 0 && (
+                {fieldError?.field === 'phone' && (
                   <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Enter a valid 10-digit Nigerian phone number
+                    {fieldError.message}
                   </p>
                 )}
               </div>
@@ -230,12 +246,13 @@ export default function RecyclerSignUpPage() {
               {/* Password */}
               <div>
                 <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Password</label>
-                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
-                  <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${fieldError?.field === 'password' ? 'border-red-400' : isPasswordValid && passwordTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                  <Lock className={`w-5 h-5 mr-3 shrink-0 ${fieldError?.field === 'password' ? 'text-red-400' : 'text-gray-400'}`} />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => setPasswordTouched(true)}
                     placeholder="Create a password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
@@ -261,25 +278,27 @@ export default function RecyclerSignUpPage() {
                     ))}
                   </div>
                   {password.length > 0 && (
-                    <p className={`text-[12px] font-bold transition-colors ${strength.textColor}`}>
-                      {strength.text}
-                    </p>
+                    <p className={`text-[12px] font-bold transition-colors ${strength.textColor}`}>{strength.text}</p>
                   )}
-                  <p className="text-[11px] text-gray-400 mt-1 leading-snug">
-                    At least 8 characters, one uppercase, one number or special character.
-                  </p>
                 </div>
+                {fieldError?.field === 'password' && (
+                  <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {fieldError.message}
+                  </p>
+                )}
               </div>
 
               {/* Confirm Password */}
               <div>
                 <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Confirm Password</label>
-                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
-                  <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${fieldError?.field === 'confirm' ? 'border-red-400' : isConfirmValid && confirmTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                  <Lock className={`w-5 h-5 mr-3 shrink-0 ${fieldError?.field === 'confirm' ? 'text-red-400' : 'text-gray-400'}`} />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => setConfirmTouched(true)}
                     placeholder="Confirm your password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
@@ -291,6 +310,12 @@ export default function RecyclerSignUpPage() {
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                {fieldError?.field === 'confirm' && (
+                  <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {fieldError.message}
+                  </p>
+                )}
               </div>
 
             </div>

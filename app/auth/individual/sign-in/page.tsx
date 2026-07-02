@@ -5,14 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  Globe, Eye, EyeOff, CheckCircle2
+  Globe, Eye, EyeOff, AlertCircle
 } from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { setToken, setUser } from '@/lib/auth';
 
 export default function SignInPage() {
   const router = useRouter();
-
-  // Account Type State
-  const [isIndividual, setIsIndividual] = useState(true);
 
   // Form State
   const [identifier, setIdentifier] = useState('');
@@ -23,22 +22,53 @@ export default function SignInPage() {
 
   // Validation State
   const [isFormValid, setIsFormValid] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   // Validation Effect
   useEffect(() => {
-    // Basic validation: identifier must be at least 5 characters (could be email or phone)
-    // and password must be at least 6 characters
     const isValid = identifier.trim().length >= 5 && password.length >= 6;
     setIsFormValid(isValid);
   }, [identifier, password]);
 
-  // Handle Login
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid) return;
+  // Determine error type based on identifier format
+  const getIdentifierType = () => {
+    if (identifier.includes('@')) return 'email';
+    if (/\d/.test(identifier)) return 'phone';
+    return 'unknown';
+  };
 
-    // Navigate to individual dashboard
-    router.push('/dashboard');
+  // Handle Login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid || loading) return;
+
+    setLoading(true);
+    setError('');
+    setTouched(true);
+
+    try {
+      const result = await authApi.login(identifier, password);
+      if (result.token) {
+        setToken(result.token);
+        if (result.user) setUser(result.user);
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+
+      // Map backend error to specific message
+      if (message.toLowerCase().includes('invalid email')) {
+        setError('Invalid email');
+      } else if (message.toLowerCase().includes('phone')) {
+        setError('Phone number does not exist');
+      } else {
+        setError(message || 'Invalid email or password');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,30 +123,39 @@ export default function SignInPage() {
           {/* Status Badge */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-2 bg-[#eaf4e7] rounded-full px-4 py-1.5 md:py-2 md:px-5 transition-all">
-              <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#449339]" />
+              <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#449339] flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+              </div>
               <span className="text-[13px] md:text-sm font-medium text-[#1b5030]">
-                Signing in as {isIndividual ? 'an Individual' : 'a Recycler'}
+                Signing in as an Individual
               </span>
-              <button
-                onClick={() => setIsIndividual(!isIndividual)}
-                type="button"
-                className="text-[13px] md:text-sm font-medium text-gray-500 hover:text-gray-800 ml-2 transition-colors cursor-pointer"
+              <Link
+                href="/auth/recycler/sign-in"
+                className="text-[13px] md:text-sm font-medium text-gray-500 hover:text-gray-800 ml-2 transition-colors underline-offset-2 hover:underline"
               >
                 Change
-              </button>
+              </Link>
             </div>
           </div>
 
           <form className="w-full flex flex-col gap-5 md:gap-6" onSubmit={handleLogin}>
 
+            {/* Error Banner */}
+            {error && (
+              <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            )}
+
             {/* Email or Phone Number */}
             <div className="w-full">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Email or Phone Number</label>
-              <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 md:py-4 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+              <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 md:py-4 bg-white transition-colors shadow-sm ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                 <input
                   type="text"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
                   placeholder="Enter your email or phone number"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
@@ -126,11 +165,11 @@ export default function SignInPage() {
             {/* Password */}
             <div className="w-full">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Password</label>
-              <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 md:py-4 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+              <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 md:py-4 bg-white transition-colors shadow-sm ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Enter your password"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
@@ -154,14 +193,14 @@ export default function SignInPage() {
             {/* Dynamic Submit Button */}
             <div className="mt-4 w-full">
               <button
-                disabled={!isFormValid}
+                disabled={!isFormValid || loading}
                 className={`w-full py-4 md:py-4 rounded-full font-semibold text-[16px] md:text-[17px] transition-all duration-300 ${
-                  isFormValid
+                  isFormValid && !loading
                     ? 'bg-[#549B45] text-white shadow-lg shadow-green-900/20 hover:bg-[#458237] hover:-translate-y-0.5 cursor-pointer'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Login
+                {loading ? 'Signing in...' : 'Login'}
               </button>
             </div>
 
