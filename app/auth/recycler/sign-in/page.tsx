@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  Globe, Eye, EyeOff, CheckCircle2, Leaf, Recycle
+  Globe, Eye, EyeOff, CheckCircle2, Recycle
 } from 'lucide-react';
 
 export default function RecyclerSignInPage() {
@@ -54,15 +55,15 @@ export default function RecyclerSignInPage() {
 
       {/* Header - Full Width Spread */}
       <header className="relative z-20 w-full flex justify-between items-center px-6 md:px-12 lg:px-24 pt-6 pb-4">
-        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full">
-          <div className="bg-green-50 p-1.5 rounded-full">
-            <Leaf className="w-5 h-5 text-[#449339]" />
-          </div>
-          <div className="text-lg md:text-xl tracking-tight">
-            <span className="font-bold text-[#449339]">EcoSmart</span>
-            <span className="font-bold text-gray-900 ml-1">AI</span>
-          </div>
-        </div>
+        <Link href="/" className="flex items-center gap-2 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-full">
+          <Image
+            src="/images/logo.png"
+            alt="EcoSmart AI"
+            width={130}
+            height={38}
+            className="h-8 w-auto md:h-9 object-contain"
+          />
+        </Link>
 
         <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer shadow-sm">
           <Globe className="w-4 h-4 text-gray-500" />
