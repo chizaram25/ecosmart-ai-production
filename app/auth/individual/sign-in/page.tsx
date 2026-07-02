@@ -24,20 +24,12 @@ export default function SignInPage() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [touched, setTouched] = useState(false);
 
   // Validation Effect
   useEffect(() => {
     const isValid = identifier.trim().length >= 5 && password.length >= 6;
     setIsFormValid(isValid);
   }, [identifier, password]);
-
-  // Determine error type based on identifier format
-  const getIdentifierType = () => {
-    if (identifier.includes('@')) return 'email';
-    if (/\d/.test(identifier)) return 'phone';
-    return 'unknown';
-  };
 
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
@@ -46,7 +38,6 @@ export default function SignInPage() {
 
     setLoading(true);
     setError('');
-    setTouched(true);
 
     try {
       const result = await authApi.login(identifier, password);
@@ -58,7 +49,6 @@ export default function SignInPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
 
-      // Map backend error to specific message
       if (message.toLowerCase().includes('invalid email')) {
         setError('Invalid email');
       } else if (message.toLowerCase().includes('phone')) {
@@ -104,7 +94,7 @@ export default function SignInPage() {
         </button>
       </header>
 
-      {/* Main Content Area - Expands on desktop */}
+      {/* Main Content Area */}
       <main className="relative z-10 flex-grow w-full max-w-4xl mx-auto px-6 md:px-12 lg:px-16 pt-4 md:pt-16 pb-20 flex flex-col items-center">
 
         {/* Title Section */}
