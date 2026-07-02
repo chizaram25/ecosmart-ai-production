@@ -16,7 +16,7 @@ export default function EcoChatAssistant() {
     {
       role: "assistant",
       content:
-        "Hi, I’m EcoSmart AI Assistant. Ask me about recycling, waste sorting, or eco-friendly disposal.",
+        "Hi, I’m Mina. Ask me about recycling, waste sorting, or eco-friendly disposal.",
     },
   ]);
 
@@ -134,7 +134,7 @@ export default function EcoChatAssistant() {
           {loading && (
             <div className="max-w-[88%] rounded-2xl bg-white px-4 py-3 shadow-sm">
               <p className="mb-2 text-xs text-slate-500">
-                EcoSmart AI is typing
+                Mina is typing
               </p>
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />

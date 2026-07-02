@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Leaf,
   ArrowLeft,
@@ -21,8 +21,7 @@ import ChatModal from "@/components/recycler/ChatModal";
 import { recyclerApi } from "@/lib/api";
 import type { RecyclerData } from "@/lib/api";
 
-export default function RecyclerDetailsPage() {
-  const router = useRouter();
+function RecyclerDetailsContent() {
   const searchParams = useSearchParams();
   const recyclerId = searchParams.get("id");
 
@@ -184,17 +183,10 @@ export default function RecyclerDetailsPage() {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#f6ebbb] text-[#f5aa00]">
                         <MapPin className="h-6 w-6" />
                       </div>
-
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                          Location
-                        </h3>
-                        <p className="mt-2 text-base leading-7 text-slate-600">
-                          {recycler.address}
-                        </p>
-                        <p className="mt-2 font-medium text-slate-800">
-                          {recycler.hours}
-                        </p>
+                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">Location</h3>
+                        <p className="mt-2 text-base leading-7 text-slate-600">{recycler.address}</p>
+                        <p className="mt-2 font-medium text-slate-800">{recycler.hours}</p>
                       </div>
                     </div>
                   </section>
@@ -213,14 +205,9 @@ export default function RecyclerDetailsPage() {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2f7d32]">
                         <Lightbulb className="h-6 w-6" />
                       </div>
-
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                          Eco Tip
-                        </h3>
-                        <p className="mt-2 text-base leading-7 text-slate-600">
-                          You can earn more by sorting your waste properly.
-                        </p>
+                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">Eco Tip</h3>
+                        <p className="mt-2 text-base leading-7 text-slate-600">You can earn more by sorting your waste properly.</p>
                       </div>
                     </div>
                   </section>
@@ -229,36 +216,17 @@ export default function RecyclerDetailsPage() {
             </div>
 
             <nav className="grid grid-cols-4 border-t border-black/5 bg-[#f3f4f6] px-3 py-3 sm:px-5 lg:px-8">
-              <Link
-                href="/dashboard"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <Home className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Home</span>
+              <Link href="/dashboard" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <Home className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Home</span>
               </Link>
-
-              <Link
-                href="/dashboard/scan"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <ScanLine className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Scan</span>
+              <Link href="/dashboard/scan" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <ScanLine className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Scan</span>
               </Link>
-
-              <Link
-                href="/dashboard/activity"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <BarChart3 className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Activity</span>
+              <Link href="/dashboard/activity" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <BarChart3 className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Activity</span>
               </Link>
-
-              <Link
-                href="/dashboard/profile"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <UserCircle2 className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Profile</span>
+              <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <UserCircle2 className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Profile</span>
               </Link>
             </nav>
           </div>
@@ -285,5 +253,17 @@ function RecycleIcon() {
     <svg className="h-16 w-16 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
     </svg>
+  );
+}
+
+export default function RecyclerDetailsPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
+      </main>
+    }>
+      <RecyclerDetailsContent />
+    </Suspense>
   );
 }

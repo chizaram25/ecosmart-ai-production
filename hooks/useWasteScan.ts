@@ -11,7 +11,7 @@ export function useWasteScan() {
     setLoading(true);
     setError(null);
     try {
-      const data = await wasteApi.scan(input) as WasteClassificationResult;
+      const data = await wasteApi.scan(input) as unknown as WasteClassificationResult;
       setResult(data);
     } catch (e) {
       setError('Failed to classify waste. Please try again.');

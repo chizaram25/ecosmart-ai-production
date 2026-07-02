@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
-  Leaf,
   ArrowLeft,
   MapPin,
   Home,
@@ -17,8 +16,7 @@ import {
 import { recyclerApi } from "@/lib/api";
 import type { RecyclerData } from "@/lib/api";
 
-export default function RecyclersPage() {
-  const router = useRouter();
+function RecyclersContent() {
   const searchParams = useSearchParams();
   const wasteParam = searchParams.get("waste");
 
@@ -26,7 +24,6 @@ export default function RecyclersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Extract unique states from recyclers
   const states = useMemo(() => {
     const unique = [...new Set(recyclers.map((r) => r.state))];
     return unique.length > 0 ? unique : ["Abuja", "Lagos", "Enugu", "Rivers", "Kano", "Oyo"];
@@ -34,7 +31,6 @@ export default function RecyclersPage() {
 
   const [selectedState, setSelectedState] = useState(states[0] || "Abuja");
 
-  // Fetch recyclers from backend
   useEffect(() => {
     setLoading(true);
     setError("");
@@ -50,7 +46,6 @@ export default function RecyclersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Update selected state when states list loads
   useEffect(() => {
     if (states.length > 0 && !states.includes(selectedState)) {
       setSelectedState(states[0]);
@@ -204,34 +199,19 @@ export default function RecyclersPage() {
             </div>
 
             <nav className="grid grid-cols-4 border-t border-black/5 bg-[#f3f4f6] px-3 py-3">
-              <Link
-                href="/dashboard"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
+              <Link href="/dashboard" className="flex flex-col items-center gap-2 py-2 text-sm">
                 <Home className="h-6 w-6 text-slate-400" />
                 <span className="font-medium text-slate-400">Home</span>
               </Link>
-
-              <Link
-                href="/dashboard/scan"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
+              <Link href="/dashboard/scan" className="flex flex-col items-center gap-2 py-2 text-sm">
                 <ScanLine className="h-6 w-6 text-slate-400" />
                 <span className="font-medium text-slate-400">Scan</span>
               </Link>
-
-              <Link
-                href="/dashboard/activity"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
+              <Link href="/dashboard/activity" className="flex flex-col items-center gap-2 py-2 text-sm">
                 <BarChart3 className="h-6 w-6 text-slate-400" />
                 <span className="font-medium text-slate-400">Activity</span>
               </Link>
-
-              <Link
-                href="/dashboard/profile"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
+              <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 py-2 text-sm">
                 <UserCircle2 className="h-6 w-6 text-slate-400" />
                 <span className="font-medium text-slate-400">Profile</span>
               </Link>
@@ -240,5 +220,17 @@ export default function RecyclersPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function RecyclersPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading recyclers...</p>
+      </main>
+    }>
+      <RecyclersContent />
+    </Suspense>
   );
 }

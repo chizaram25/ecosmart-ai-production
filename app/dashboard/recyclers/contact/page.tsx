@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Leaf,
   Menu,
   Phone,
   MessageCircle,
@@ -21,7 +20,7 @@ import type { RecyclerData } from "@/lib/api";
 
 type DeliveryType = "Pickup" | "Drop off";
 
-export default function ContactRecyclerPage() {
+function ContactRecyclerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const recyclerId = searchParams.get("recyclerId");
@@ -211,34 +210,19 @@ export default function ContactRecyclerPage() {
               </div>
 
               <nav className="grid grid-cols-4 border-t border-black/5 bg-[#f3f4f6] px-3 py-3 sm:px-5 lg:px-8">
-                <Link
-                  href="/dashboard"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <Home className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Home</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/scan"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/scan" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <ScanLine className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Scan</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/activity"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/activity" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <BarChart3 className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Activity</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/profile"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <UserCircle2 className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Profile</span>
                 </Link>
@@ -260,5 +244,17 @@ export default function ContactRecyclerPage() {
         />
       </div>
     </main>
+  );
+}
+
+export default function ContactRecyclerPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
+      </main>
+    }>
+      <ContactRecyclerContent />
+    </Suspense>
   );
 }

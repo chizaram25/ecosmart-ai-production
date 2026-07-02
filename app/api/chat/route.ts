@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       .join("\n");
 
     const systemPrompt = `
-You are EcoSmart AI Assistant.
+You are Mina, an AI assistant for EcoSmart AI.
 Help users with recycling, waste sorting, eco-friendly disposal, and sustainability tips.
 Keep responses clear, practical, and friendly.
 
