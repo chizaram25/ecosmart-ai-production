@@ -197,7 +197,7 @@ export default function ProfileLocationStep() {
           </p>
         </div>
 
-        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={(e) => { e.preventDefault(); if (isFormValid) router.push('/auth/recycler/build-profile'); }}>
+        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={(e) => { e.preventDefault(); if (isFormValid) router.push('/auth/recycler/build-profile/categories'); }}>
 
           {/* --- SECTION 1: YOUR LOCATION --- */}
           <div className="flex flex-col gap-6">
@@ -475,7 +475,7 @@ export default function ProfileLocationStep() {
         <div className="flex justify-center gap-4 md:gap-8 mt-12 text-[12px] md:text-[14px]">
           <Link href="/auth/recycler/build-profile" className="font-semibold text-[#549B45] hover:text-gray-900">Basic Info</Link>
           <span className="font-bold text-gray-900">Location</span>
-          <span className="text-gray-400 font-medium">Categories</span>
+          <Link href="/auth/recycler/build-profile/categories" className="font-medium text-gray-400 hover:text-[#549B45]">Categories</Link>
           <span className="text-gray-400 font-medium">Pricing</span>
         </div>
 
