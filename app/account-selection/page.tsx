@@ -8,9 +8,9 @@ export default function AccountSelection() {
 
   const handleSelect = (role: "individual" | "recycler") => {
     if (role === "individual") {
-      router.push("/auth/individual/sign-up");
+      router.push("/auth/individual/sign-in");
     } else {
-      router.push("/auth/recycler/sign-up");
+      router.push("/auth/recycler/sign-in");
     }
   };
 
@@ -140,12 +140,12 @@ export default function AccountSelection() {
 
         </div>
 
-        {/* Sign In Link */}
+        {/* Sign Up Link */}
         <div className="mt-10 text-center">
           <p className="text-[13px] md:text-sm text-gray-500">
-            Already have an account?{' '}
-            <button onClick={() => router.push('/auth/individual/sign-in')} className="font-bold text-[#1b5030] hover:text-[#449339] transition-colors hover:underline underline-offset-2 cursor-pointer">
-              Sign in
+            New here?{' '}
+            <button onClick={() => router.push('/auth/individual/sign-up')} className="font-bold text-[#1b5030] hover:text-[#449339] transition-colors hover:underline underline-offset-2 cursor-pointer">
+              Get Started
             </button>
           </p>
         </div>
