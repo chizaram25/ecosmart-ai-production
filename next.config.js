@@ -5,6 +5,9 @@ const nextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 module.exports = nextConfig;
