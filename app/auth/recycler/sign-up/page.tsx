@@ -103,7 +103,7 @@ export default function RecyclerSignUpPage() {
         if (result.user) setUser(result.user);
       }
     } catch {}
-    router.push('/dashboard');
+    router.push('/auth/recycler/build-profile');
   };
 
   return (
