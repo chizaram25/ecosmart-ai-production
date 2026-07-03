@@ -110,7 +110,7 @@ export default function ProfileCategoriesStep() {
     if (!isFormValid) {
       setTouched({ materials: true, methods: true, quantity: true });
     } else {
-      router.push('/auth/recycler/build-profile');
+      router.push('/auth/recycler/build-profile/pricing');
     }
   };
 
@@ -366,7 +366,7 @@ export default function ProfileCategoriesStep() {
           <Link href="/auth/recycler/build-profile" className="font-medium text-[#549B45] hover:text-gray-900">Basic Info</Link>
           <Link href="/auth/recycler/build-profile/location" className="font-medium text-gray-400 hover:text-[#549B45]">Location</Link>
           <span className="font-bold text-gray-900">Categories</span>
-          <span className="text-gray-400 font-medium">Pricing</span>
+          <Link href="/auth/recycler/build-profile/pricing" className="font-medium text-gray-400 hover:text-[#549B45]">Pricing</Link>
         </div>
 
       </main>

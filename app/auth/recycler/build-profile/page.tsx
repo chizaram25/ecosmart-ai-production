@@ -347,7 +347,7 @@ export default function BuildProfileStep1() {
           <span className="font-bold text-gray-900">Basic Info</span>
           <Link href="/auth/recycler/build-profile/location" className="font-medium text-gray-400 hover:text-[#549B45]">Location</Link>
           <Link href="/auth/recycler/build-profile/categories" className="font-medium text-gray-400 hover:text-[#549B45]">Categories</Link>
-          <span className="text-gray-400 font-medium">Pricing</span>
+          <Link href="/auth/recycler/build-profile/pricing" className="font-medium text-gray-400 hover:text-[#549B45]">Pricing</Link>
         </div>
 
       </main>
