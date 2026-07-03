@@ -44,17 +44,6 @@ export default function SignInPage() {
       if (result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);
-        // Save mock dashboard data for demo
-        const demoName = result.user?.name || "User";
-        localStorage.setItem("mock_dashboard", JSON.stringify({
-          user: { name: demoName },
-          stats: { totalEarnings: 2400, itemsScanned: 3 },
-          recentActivity: [
-            { id: "1", title: "Plastic Bottles", time: "2 hours ago", amount: 500, status: "Recycled" },
-            { id: "2", title: "Aluminium Cans", time: "Yesterday", amount: 1200, status: "Recycled" },
-            { id: "3", title: "Cardboard Box", time: "3 days ago", amount: 700, status: "Pending" }
-          ]
-        }));
         router.push('/dashboard');
       }
     } catch (err) {

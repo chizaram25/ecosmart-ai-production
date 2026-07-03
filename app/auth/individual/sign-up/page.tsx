@@ -25,6 +25,7 @@ export default function IndividualSignUpPage() {
   // UI State
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Touched State
   const [nameTouched, setNameTouched] = useState(false);
@@ -65,25 +66,16 @@ export default function IndividualSignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isFormValid || loading) return;
+    setLoading(true);
     try {
-      const result = await authApi.register(name, email, password, phone.replace(/D/g, ""));
+      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""));
       if (result && result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);
       }
     } catch (e) { console.error(e); }
-    // Save mock dashboard data so it displays for the demo
-      localStorage.setItem("mock_dashboard", JSON.stringify({
-        user: { name: name.trim() },
-        stats: { totalEarnings: 2400, itemsScanned: 3 },
-        recentActivity: [
-          { id: "1", title: "Plastic Bottles", time: "2 hours ago", amount: 500, status: "Recycled" },
-          { id: "2", title: "Aluminium Cans", time: "Yesterday", amount: 1200, status: "Recycled" },
-          { id: "3", title: "Cardboard Box", time: "3 days ago", amount: 700, status: "Pending" }
-        ]
-      }));
-      router.push('/dashboard');
+    router.push('/dashboard');
   };
 
   // Determine which error to show (first invalid touched field)
@@ -127,7 +119,7 @@ export default function IndividualSignUpPage() {
         </button>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Expands widely on desktop */}
       <main className="relative z-10 flex-grow w-full max-w-5xl mx-auto px-6 md:px-12 lg:px-20 pt-4 md:pt-12 pb-20 flex flex-col items-center">
 
         {/* Title Section */}
@@ -140,7 +132,7 @@ export default function IndividualSignUpPage() {
           </p>
         </div>
 
-        {/* Form Container */}
+        {/* Form Container - Uses a grid on Desktop */}
         <div className="w-full bg-white md:bg-gray-50/30 md:border md:border-gray-100 md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:p-10 lg:p-12">
 
           {/* Status Badge */}
@@ -161,6 +153,7 @@ export default function IndividualSignUpPage() {
 
           <form className="w-full" onSubmit={handleSubmit}>
 
+            {/* Responsive Grid: 1 column mobile, 2 columns desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
 
               {/* Full Name */}
@@ -173,7 +166,8 @@ export default function IndividualSignUpPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onBlur={() => setNameTouched(true)}
-                    name="name" placeholder="Maryam Abdulkarim"
+                    placeholder="Maryam Abdulkarim"
+                    name="name"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isNameValid && nameTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0" />}
@@ -196,7 +190,8 @@ export default function IndividualSignUpPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setEmailTouched(true)}
-                    name="email" placeholder="mh@gmail.com"
+                    placeholder="mh@gmail.com"
+                    name="email"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isEmailValid && emailTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0" />}
@@ -219,7 +214,8 @@ export default function IndividualSignUpPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onBlur={() => setPasswordTouched(true)}
-                    name="password" placeholder="Create a password"
+                    placeholder="Create a password"
+                    name="password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
@@ -248,7 +244,8 @@ export default function IndividualSignUpPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onBlur={() => setConfirmTouched(true)}
-                    name="password" placeholder="Confirm your password"
+                    placeholder="Confirm your password"
+                    name="confirmPassword"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
@@ -267,7 +264,7 @@ export default function IndividualSignUpPage() {
                 )}
               </div>
 
-              {/* Phone Number */}
+              {/* Phone Number - Spans full width on desktop for visual balance */}
               <div className="md:col-span-2 md:max-w-xl md:mx-auto w-full">
                 <label className="block text-[13px] md:text-sm font-medium text-gray-700 mb-1.5 md:mb-2">Phone Number</label>
                 <div className={`relative flex items-center border rounded-2xl bg-white overflow-hidden transition-colors ${fieldError?.field === 'phone' ? 'border-red-400' : isPhoneValid && phoneTouched ? 'border-green-500' : 'border-gray-200 focus-within:border-[#449339]'}`}>
@@ -287,7 +284,8 @@ export default function IndividualSignUpPage() {
                       setPhone(e.target.value);
                       setPhoneTouched(true);
                     }}
-                    name="phone" placeholder="901 234 5678"
+                    placeholder="901 234 5678"
+                    name="phone"
                     className="w-full px-3 py-3 md:py-3.5 outline-none text-[14px] md:text-[15px] text-gray-900 bg-transparent"
                   />
                   {isPhoneValid && phoneTouched && <Check className="w-5 h-5 text-[#449339] mr-3 shrink-0" />}
@@ -302,7 +300,7 @@ export default function IndividualSignUpPage() {
               </div>
             </div>
 
-            {/* Bottom Section */}
+            {/* Bottom Form Section (Terms & Submit) */}
             <div className="mt-8 md:mt-10 max-w-xl mx-auto w-full flex flex-col items-center">
 
               {/* Terms Checkbox */}
@@ -318,16 +316,16 @@ export default function IndividualSignUpPage() {
                 </p>
               </div>
 
-              {/* Submit Button */}
+              {/* Dynamic Submit Button */}
               <button
-                disabled={!isFormValid}
+                disabled={!isFormValid || loading}
                 className={`w-full py-4 rounded-3xl font-semibold text-[15px] md:text-base transition-all duration-300 ${
-                  isFormValid
+                  isFormValid && !loading
                     ? 'bg-[#449339] text-white shadow-lg shadow-green-900/20 hover:bg-[#3a7d31] hover:-translate-y-0.5 cursor-pointer'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
 
               {/* Social Logins Divider */}

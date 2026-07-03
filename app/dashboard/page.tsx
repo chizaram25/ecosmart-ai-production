@@ -37,43 +37,32 @@ export default function EcoSmartDashboardPage() {
   >("home");
   const [isNavSidebarOpen, setIsNavSidebarOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
-  // Hydration-safe: wait for client render, then read localStorage + fetch dashboard
   useEffect(() => {
     if (!hydrated) {
       setHydrated(true);
       return;
     }
 
-    // Check mock data for demo (saved from sign-up or sign-in)
-    const mockRaw = localStorage.getItem("mock_dashboard");
-    if (mockRaw) {
-      try {
-        const mockParsed = JSON.parse(mockRaw);
-        setDashboardData(mockParsed);
-        setLoading(false);
-        localStorage.removeItem("mock_dashboard");
-        return;
-      } catch(e) {}
-    }
-
+    const storedUser = getUser();
     const savedToken = getToken() || "";
-    if (!savedToken) {
-      setLoading(false);
-      return;
+
+    // Show user name immediately from localStorage
+    if (storedUser?.name) {
+      setDashboardData({
+        user: { name: storedUser.name },
+        stats: { totalEarnings: 0, itemsScanned: 0 },
+        recentActivity: [],
+      });
     }
 
+    if (!savedToken) return;
+
+    // Fetch real data from API
     const fetchDashboard = async (t: string) => {
       try {
-        setLoading(true);
-        setError("");
-
         const response = await getDashboardData(t);
-
-        const storedUser = getUser();
 
         const formattedData: DashboardData = {
           user: {
@@ -92,9 +81,7 @@ export default function EcoSmartDashboardPage() {
         setDashboardData(formattedData);
       } catch (error: any) {
         console.error("Dashboard error:", error);
-        setError(error.message || "Failed to load dashboard");
-      } finally {
-        setLoading(false);
+        // Keep showing user name from localStorage even if API fails
       }
     };
 
@@ -103,11 +90,8 @@ export default function EcoSmartDashboardPage() {
 
   const handleQuickAction = async (actionId: string) => {
     try {
-      if (actionId === "scan") {
-        setActiveTab("scan");
-      } else if (actionId === "history") {
-        setActiveTab("activity");
-      }
+      if (actionId === "scan") setActiveTab("scan");
+      else if (actionId === "history") setActiveTab("activity");
     } catch (error) {
       console.error("Quick action error:", error);
     }
@@ -123,9 +107,7 @@ export default function EcoSmartDashboardPage() {
       const response = await getDashboardData(savedToken);
       const storedUser = getUser();
       setDashboardData({
-        user: {
-          name: storedUser?.name || response.user.name,
-        },
+        user: { name: storedUser?.name || response.user.name },
         stats: response.stats,
         recentActivity: response.recentActivity.map((activity) => ({
           _id: activity.id,
@@ -140,35 +122,13 @@ export default function EcoSmartDashboardPage() {
     }
   };
 
-  // Wait for hydration
   if (!hydrated) return null;
 
-  if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-[#edf3ea] p-10 text-center text-lg text-slate-500">Loading dashboard...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#edf3ea] p-10 text-center">
-        <p className="text-lg text-red-500">Failed to load dashboard</p>
-        <p className="text-sm text-slate-400">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="rounded-full bg-[#5d9d35] px-6 py-2 text-sm font-semibold text-white"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!dashboardData) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#edf3ea] p-10 text-center">
-        <p className="text-lg text-slate-500">No dashboard data available. Start scanning!</p>
-      </div>
-    );
-  }
+  const displayData = dashboardData || {
+    user: { name: getUser()?.name || "User" },
+    stats: { totalEarnings: 0, itemsScanned: 0 },
+    recentActivity: [],
+  };
 
   return (
     <main className="min-h-screen bg-[#edf3ea]">
@@ -179,43 +139,19 @@ export default function EcoSmartDashboardPage() {
               <DashboardHeader openSidebar={() => setIsNavSidebarOpen(true)} />
 
               <div className="flex-1 space-y-4 px-4 pb-4 sm:space-y-5 sm:px-6 sm:pb-5 lg:px-8 lg:pb-8">
-                <WelcomeSection name={dashboardData.user.name} />
-
+                <WelcomeSection name={displayData.user.name} />
                 <ScanCard handleQuickAction={handleQuickAction} />
-
-                <QuickActions
-                  quickActions={quickActions}
-                  handleQuickAction={handleQuickAction}
-                />
-
-                <EarningsCard
-                  totalEarnings={dashboardData.stats.totalEarnings}
-                  ecoPoints={dashboardData.stats.itemsScanned}
-                />
-
+                <QuickActions quickActions={quickActions} handleQuickAction={handleQuickAction} />
+                <EarningsCard totalEarnings={displayData.stats.totalEarnings} ecoPoints={displayData.stats.itemsScanned} />
                 <EcoTipCard />
-
-                <RecentActivity
-                  activities={dashboardData.recentActivity}
-                  setActiveTab={setActiveTab}
-                  markPendingAsRecycled={handleMarkPendingAsRecycled}
-                />
+                <RecentActivity activities={displayData.recentActivity} setActiveTab={setActiveTab} markPendingAsRecycled={handleMarkPendingAsRecycled} />
               </div>
 
               {!isNavSidebarOpen && (
-                <BottomNav
-                  navItems={navItems}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  openProfileSidebar={() => {}}
-                />
+                <BottomNav navItems={navItems} activeTab={activeTab} setActiveTab={setActiveTab} openProfileSidebar={() => {}} />
               )}
 
-              <NavigationSidebar
-                isOpen={isNavSidebarOpen}
-                onClose={() => setIsNavSidebarOpen(false)}
-                onNavigate={setActiveTab}
-              />
+              <NavigationSidebar isOpen={isNavSidebarOpen} onClose={() => setIsNavSidebarOpen(false)} onNavigate={setActiveTab} />
             </div>
           </section>
         </div>
