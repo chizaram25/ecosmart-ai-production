@@ -12,10 +12,20 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+
+  const res = await fetch(url, {
     ...options,
     headers: { ...headers, ...options?.headers },
   });
+
+  // Handle non-JSON responses
+  const contentType = res.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await res.text();
+    console.error(`API returned non-JSON (${res.status}) from ${url}:`, text.slice(0, 200));
+    throw new Error(`Server returned HTML instead of JSON. The backend at ${BASE_URL} may be down.`);
+  }
 
   const data = await res.json();
 
