@@ -7,6 +7,8 @@ import {
   Globe, User, Mail, Lock, Eye, EyeOff,
   AlertCircle, Check, CheckCircle2
 } from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { setToken, setUser } from '@/lib/auth';
 
 export default function IndividualSignUpPage() {
   const router = useRouter();
@@ -61,11 +63,17 @@ export default function IndividualSignUpPage() {
     setIsFormValid(nameValid && emailValid && phoneRegex.test(cleanPhone) && passValid && confirmMatch && agreed);
   }, [name, email, phone, password, confirmPassword, agreed]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormValid) {
-      router.push('/auth/individual/sign-in');
-    }
+    if (!isFormValid) return;
+    try {
+      const result = await authApi.register(name, email, password);
+      if (result.token) {
+        setToken(result.token);
+        if (result.user) setUser(result.user);
+      }
+    } catch {}
+    router.push('/auth/individual/sign-in');
   };
 
   // Determine which error to show (first invalid touched field)
