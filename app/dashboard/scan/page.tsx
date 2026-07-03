@@ -24,13 +24,12 @@ export default function ScannerPage() {
   const [currentFacing, setCurrentFacing] = useState<string>("environment");
   const [hydrated, setHydrated] = useState(false);
 
+  // ── 1. ALL HOOKS EXECUTED FIRST ──
+
   useEffect(() => {
     setHydrated(true);
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
-
-  // Don't render anything until hydrated to match server
-  if (!hydrated) return null;
 
   const processStoredImage = useCallback(async () => {
     const storedImage = localStorage.getItem("scannedImage");
@@ -82,7 +81,24 @@ export default function ScannerPage() {
     });
 
     return () => stopCamera();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processStoredImage, processManualText]);
+
+  // Assign stream to video element whenever it becomes available
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  });
+
+
+  // ── 2. EARLY RETURN AFTER HOOKS ──
+  
+  // Don't render anything until hydrated to match server
+  if (!hydrated) return null;
+
+
+  // ── 3. COMPONENT FUNCTIONS ──
 
   const startCamera = async () => {
     try {
@@ -119,13 +135,6 @@ export default function ScannerPage() {
       setError("Camera access denied.");
     }
   };
-
-  // Assign stream to video element whenever it becomes available
-  useEffect(() => {
-    if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
-      videoRef.current.srcObject = streamRef.current;
-    }
-  });
 
   const stopCamera = () => {
     if (streamRef.current) {
@@ -213,6 +222,9 @@ export default function ScannerPage() {
     setCameraReady(false);
     startCamera();
   };
+
+
+  // ── 4. RENDER VIEWS ──
 
   // Scanning overlay
   if (scanning) {

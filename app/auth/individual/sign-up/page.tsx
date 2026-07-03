@@ -78,7 +78,7 @@ export default function IndividualSignUpPage() {
     router.push('/dashboard');
   };
 
-  // Determine which error to show (first invalid touched field)
+  // Determine which error to show
   const getFieldError = () => {
     if (nameTouched && !isNameValid) return { field: 'name', message: 'Name is required' };
     if (emailTouched && !isEmailValid) return { field: 'email', message: email.length > 0 ? 'Invalid email' : 'Email is required' };
