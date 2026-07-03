@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Globe, User, Recycle, ArrowRight } from "lucide-react";
 
-export default function AccountSelection() {
+// 1. We rename your main component to 'Content' so we can wrap it in Suspense later
+function AccountSelectionContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selected, setSelected] = useState<"individual" | "recycler" | null>(null);
+
+  // 2. Read the URL to see if they came from a 'login' button
+  const mode = searchParams.get("mode");
+  
+  // 3. Set the destination based on the mode. 
+  // (Note: Change "sign-in" to "login" below if your folder is named /auth/individual/login)
+  const destination = mode === "login" ? "sign-in" : "sign-up"; 
 
   const handleSelect = (role: "individual" | "recycler") => {
     setSelected(role);
     // Brief delay to show green state before navigating
     setTimeout(() => {
       if (role === "individual") {
-        router.push("/auth/individual/sign-up");
+        // 4. Inject the dynamic destination into the router path
+        router.push(`/auth/individual/${destination}`);
       } else {
-        router.push("/auth/recycler/sign-up");
+        router.push(`/auth/recycler/${destination}`);
       }
     }, 300);
   };
@@ -153,5 +163,18 @@ export default function AccountSelection() {
 
       </main>
     </div>
+  );
+}
+
+// 5. This is the main export. It safely wraps the component in a Suspense boundary.
+export default function AccountSelection() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-[#449339] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <AccountSelectionContent />
+    </Suspense>
   );
 }

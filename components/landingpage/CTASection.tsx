@@ -16,10 +16,13 @@ export function CTASection() {
         </p>
 
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 relative z-10 max-w-md mx-auto md:max-w-none">
-          <Link href="/account-selection" className="w-full md:w-auto md:px-12 bg-white text-[#1b5030] font-bold py-4 rounded-full hover:bg-green-50 transition-all shadow-xl hover:-translate-y-1 cursor-pointer text-center">
+          {/* Updated Get Started Link */}
+          <Link href="/account-selection?mode=register" className="w-full md:w-auto md:px-12 bg-white text-[#1b5030] font-bold py-4 rounded-full hover:bg-green-50 transition-all shadow-xl hover:-translate-y-1 cursor-pointer text-center">
             Get Started
           </Link>
-          <Link href="/account-selection" className="w-full md:w-auto md:px-12 bg-transparent border-2 border-white/40 text-white font-bold py-4 rounded-full hover:bg-white/10 transition-colors cursor-pointer text-center">
+          
+          {/* Updated Sign In Link */}
+          <Link href="/account-selection?mode=login" className="w-full md:w-auto md:px-12 bg-transparent border-2 border-white/40 text-white font-bold py-4 rounded-full hover:bg-white/10 transition-colors cursor-pointer text-center">
             Sign In
           </Link>
         </div>

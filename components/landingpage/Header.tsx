@@ -16,7 +16,8 @@ export function Header() {
             className="h-8 w-auto md:h-9 object-contain"
           />
         </Link>
-        <Link href="/account-selection" className="text-sm md:text-base font-bold text-[#1b5030] hover:text-[#449339] transition-colors">
+        {/* The link below now tells the selection page to route to Login */}
+        <Link href="/account-selection?mode=login" className="text-sm md:text-base font-bold text-[#1b5030] hover:text-[#449339] transition-colors">
           Sign In
         </Link>
       </div>
