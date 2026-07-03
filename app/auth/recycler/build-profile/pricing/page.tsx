@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Globe, ChevronLeft, Check, Leaf, AlertCircle, ArrowRight, Bot,
   Wine, Cylinder, Cog, Zap, ChevronDown, ChevronUp, CheckCircle2
 } from 'lucide-react';
 
 export default function ProfilePricingStep() {
+  const router = useRouter();
   const [negotiateAll, setNegotiateAll] = useState(false);
 
   const [prices, setPrices] = useState<Record<string, string>>({
@@ -89,7 +91,7 @@ export default function ProfilePricingStep() {
       Object.keys(prices).forEach(k => allTouched[`price_${k}`] = true);
       setTouched(allTouched);
     } else {
-      alert("Profile Successfully Configured!");
+      router.push("/auth/recycler/build-profile/success");
     }
   };
 
