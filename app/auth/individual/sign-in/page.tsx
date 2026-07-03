@@ -44,7 +44,12 @@ export default function SignInPage() {
       if (result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);
-        router.push('/dashboard');
+        // Redirect based on user role
+        if (result.user.role === 'recycler') {
+          router.push('/dashboard/recyclers');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';

@@ -110,16 +110,16 @@ export interface DashboardData {
 export const authApi = {
   /** POST /api/auth/login — Sign in with email/phone + password */
   login: (email: string, password: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string } }>(
+    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
       '/auth/login',
       { method: 'POST', body: JSON.stringify({ email, password }) }
     ),
 
   /** POST /api/auth/register — Create a new account */
-  register: (name: string, email: string, password: string, phone?: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string } }>(
+  register: (name: string, email: string, password: string, phone?: string, role?: string) =>
+    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
       '/auth/register',
-      { method: 'POST', body: JSON.stringify({ name, email, password, phone }) }
+      { method: 'POST', body: JSON.stringify({ name, email, password, phone, role }) }
     ),
 
   /** GET /api/auth/me — Get current logged-in user profile */
