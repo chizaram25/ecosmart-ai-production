@@ -67,15 +67,27 @@ export default function IndividualSignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid || loading) return;
+    
     setLoading(true);
+    
     try {
-      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""));
+      // 🛑 STRICT ROLE ASSIGNMENT: Passed 'individual' to the API
+      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'individual');
+      
       if (result && result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);
+        
+        // ✅ SAFE ROUTING: Only navigate on success
+        router.push('/dashboard');
       }
-    } catch (e) { console.error(e); }
-    router.push('/dashboard');
+    } catch (e) { 
+      console.error(e); 
+      // Optionally add an error state here to show the user (e.g. "Email already in use")
+    } finally {
+      // ✅ Reset loading state so the button becomes clickable again on failure
+      setLoading(false);
+    }
   };
 
   // Determine which error to show

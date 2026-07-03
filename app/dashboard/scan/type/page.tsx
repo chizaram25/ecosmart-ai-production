@@ -56,7 +56,9 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
 
     localStorage.setItem("manualWasteType", query.trim());
     localStorage.setItem("scanSource", "manual");
-    router.push("/dashboard/scan/analyze");
+    
+    // ✅ Updated route: Sends user to the main scanner to trigger analysis
+    router.push("/dashboard/scan");
   };
 
   return (
@@ -69,8 +71,8 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                 <div className="flex items-center gap-2">
                   <img
                     src="/images/logo.png"
-                      alt="EcoSmart AI Logo"
-                      className="h-10 w-auto object-contain"
+                    alt="EcoSmart AI Logo"
+                    className="h-10 w-auto object-contain"
                   />
                 </div>
 
@@ -78,7 +80,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   onClick={openSidebar}
                   className="rounded-xl p-2 text-slate-700 transition hover:bg-white"
                   aria-label="Open navigation"
-                  >
+                >
                   <Menu className="h-6 w-6" />
                 </button>
               </header>

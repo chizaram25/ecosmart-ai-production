@@ -25,6 +25,7 @@ export default function RecyclerSignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [loading, setLoading] = useState(false); // Added loading state
 
   // Field Validation States
   const [isNameValid, setIsNameValid] = useState(false);
@@ -95,15 +96,28 @@ export default function RecyclerSignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isFormValid || loading) return;
+    
+    setLoading(true);
+    
     try {
-      const result = await authApi.register(name, email, password);
-      if (result.token) {
+      // 🛑 STRICT ROLE ASSIGNMENT: Passed 'recycler' to the API
+      // Also ensuring phone is sent securely if required by your API structure
+      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'recycler');
+      
+      if (result && result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);
+        
+        // ✅ SAFE ROUTING: Only navigate on success
+        router.push('/auth/recycler/build-profile');
       }
-    } catch {}
-    router.push('/auth/recycler/build-profile');
+    } catch (err) {
+      console.error("Registration error:", err);
+      // Optionally handle specific errors here (like email already in use)
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -322,14 +336,14 @@ export default function RecyclerSignUpPage() {
 
               {/* Submit Button */}
               <button
-                disabled={!isFormValid}
+                disabled={!isFormValid || loading}
                 className={`w-full py-4 rounded-full font-semibold text-[15px] md:text-[16px] transition-all duration-300 ${
-                  isFormValid
+                  isFormValid && !loading
                     ? 'bg-[#549B45] text-white shadow-lg shadow-green-900/20 hover:bg-[#458237] hover:-translate-y-0.5 cursor-pointer'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
 
               {/* Footer Link */}
