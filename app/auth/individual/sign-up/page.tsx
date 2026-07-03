@@ -163,7 +163,7 @@ export default function IndividualSignUpPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onBlur={() => setNameTouched(true)}
-                    placeholder="Maryam Abdulkarim"
+                    name="name" placeholder="Maryam Abdulkarim"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isNameValid && nameTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0" />}
@@ -186,7 +186,7 @@ export default function IndividualSignUpPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setEmailTouched(true)}
-                    placeholder="mh@gmail.com"
+                    name="email" placeholder="mh@gmail.com"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isEmailValid && emailTouched && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0" />}
@@ -209,7 +209,7 @@ export default function IndividualSignUpPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onBlur={() => setPasswordTouched(true)}
-                    placeholder="Create a password"
+                    name="password" placeholder="Create a password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
@@ -238,7 +238,7 @@ export default function IndividualSignUpPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onBlur={() => setConfirmTouched(true)}
-                    placeholder="Confirm your password"
+                    name="password" placeholder="Confirm your password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
@@ -277,7 +277,7 @@ export default function IndividualSignUpPage() {
                       setPhone(e.target.value);
                       setPhoneTouched(true);
                     }}
-                    placeholder="901 234 5678"
+                    name="phone" placeholder="901 234 5678"
                     className="w-full px-3 py-3 md:py-3.5 outline-none text-[14px] md:text-[15px] text-gray-900 bg-transparent"
                   />
                   {isPhoneValid && phoneTouched && <Check className="w-5 h-5 text-[#449339] mr-3 shrink-0" />}

@@ -209,7 +209,7 @@ export default function BuildProfilePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={() => handleBlur('description')}
-                placeholder="e.g. We collect plastic and aluminium across Kubwa, Abuja. Available Monday to Saturday."
+                name="description" placeholder="e.g. We collect plastic and aluminium across Kubwa, Abuja. Available Monday to Saturday."
                 className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent resize-none min-h-[100px]"
                 maxLength={200}
               />
@@ -250,7 +250,7 @@ export default function BuildProfilePage() {
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 onBlur={() => handleBlur('whatsapp')}
-                placeholder="WhatsApp number for household contact"
+                name="whatsapp" placeholder="WhatsApp number for household contact"
                 className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
               />
               {errors.whatsapp && <AlertCircle className="w-5 h-5 text-red-500 ml-2 shrink-0 animate-in zoom-in" />}

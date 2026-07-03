@@ -177,7 +177,7 @@ export default function RecyclerSignUpPage() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Eco Waste Ltd."
+                    name="name" placeholder="Eco Waste Ltd."
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isNameValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
@@ -193,7 +193,7 @@ export default function RecyclerSignUpPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@mail.com"
+                    name="email" placeholder="example@mail.com"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   {isEmailValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
@@ -220,7 +220,7 @@ export default function RecyclerSignUpPage() {
                       setPhone(e.target.value);
                       setPhoneTouched(true);
                     }}
-                    placeholder="901 234 5678"
+                    name="phone" placeholder="901 234 5678"
                     className="w-full px-4 py-3.5 outline-none text-[14px] md:text-[15px] text-gray-900 bg-transparent"
                   />
                   {isPhoneValid && <Check className="w-5 h-5 text-[#449339] mr-4 shrink-0 animate-in zoom-in" />}
@@ -245,7 +245,7 @@ export default function RecyclerSignUpPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a password"
+                    name="password" placeholder="Create a password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
@@ -289,7 +289,7 @@ export default function RecyclerSignUpPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
+                    name="password" placeholder="Confirm your password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button

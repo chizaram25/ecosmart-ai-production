@@ -144,7 +144,7 @@ export default function RecyclerSignInPage() {
                   type="text"
                   value={identifier}
                   onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
-                  placeholder="Enter your email or phone number"
+                  name="identifier" placeholder="Enter your email or phone number"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function RecyclerSignInPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  placeholder="Enter your password"
+                  name="password" placeholder="Enter your password"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
                 <button

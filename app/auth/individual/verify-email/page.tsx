@@ -167,7 +167,7 @@ function EmailVerificationContent() {
                   inputRefs.current[index] = el;
                 }}
                 type="text"
-                inputMode="numeric"
+                name="otp" inputMode="numeric"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
