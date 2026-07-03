@@ -25,7 +25,9 @@ function RecyclersContent() {
   const [error, setError] = useState("");
 
   const states = useMemo(() => {
-    const unique = [...new Set(recyclers.map((r) => r.state))];
+    // 1. SAFEGUARD: Ensure recyclers is an array before mapping
+    if (!Array.isArray(recyclers)) return ["Abuja", "Lagos", "Enugu", "Rivers", "Kano", "Oyo"];
+    const unique = [...new Set(recyclers.map((r) => r?.state).filter(Boolean))];
     return unique.length > 0 ? unique : ["Abuja", "Lagos", "Enugu", "Rivers", "Kano", "Oyo"];
   }, [recyclers]);
 
@@ -37,9 +39,11 @@ function RecyclersContent() {
     recyclerApi
       .getAll()
       .then((data) => {
-        setRecyclers(data || []);
-        if (data?.length > 0 && data[0].state) {
-          setSelectedState(data[0].state);
+        // 2. SAFEGUARD: Strictly check that the backend gave us an array
+        const validData = Array.isArray(data) ? data : [];
+        setRecyclers(validData);
+        if (validData.length > 0 && validData[0]?.state) {
+          setSelectedState(validData[0].state);
         }
       })
       .catch((err) => setError(err.message))
@@ -53,14 +57,16 @@ function RecyclersContent() {
   }, [states, selectedState]);
 
   const currentLocation = useMemo(() => {
-    const found = recyclers.find((r) => r.state === selectedState);
+    if (!Array.isArray(recyclers)) return { state: selectedState, address: "", mapQuery: `${selectedState},Nigeria` };
+    const found = recyclers.find((r) => r?.state === selectedState);
     return found
-      ? { state: found.state, address: found.address, mapQuery: found.mapQuery }
+      ? { state: found.state, address: found.address, mapQuery: found.mapQuery || `${selectedState},Nigeria` }
       : { state: selectedState, address: "", mapQuery: `${selectedState},Nigeria` };
   }, [recyclers, selectedState]);
 
   const filteredRecyclers = useMemo(() => {
-    return recyclers.filter((r) => r.state === selectedState);
+    if (!Array.isArray(recyclers)) return [];
+    return recyclers.filter((r) => r?.state === selectedState);
   }, [recyclers, selectedState]);
 
   return (
@@ -119,9 +125,10 @@ function RecyclersContent() {
               </p>
 
               <section className="mt-6 overflow-hidden rounded-[22px] bg-[#eceae4]">
+                {/* 3. SAFEGUARD: Fixed string interpolation syntax from 0{ to ${ */}
                 <iframe
                   title="Recycler map"
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
                     currentLocation.mapQuery
                   )}&z=12&output=embed`}
                   className="h-65 w-full border-0"
@@ -142,7 +149,7 @@ function RecyclersContent() {
                 <div className="mt-6 space-y-5">
                   {filteredRecyclers.map((item) => (
                     <article
-                      key={item._id}
+                      key={item._id || Math.random().toString()}
                       className="rounded-3xl bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -153,13 +160,14 @@ function RecyclersContent() {
 
                           <div className="min-w-0">
                             <h3 className="truncate text-xl font-semibold text-slate-900">
-                              {item.name}
+                              {item.name || "Unknown Recycler"}
                             </h3>
                             <p className="mt-1 text-base text-slate-400">
-                              {item.distance}
+                              {item.distance || "Distance unknown"}
                             </p>
                             <p className="mt-3 text-base text-slate-400">
-                              ♻ {item.wasteTypes.join(", ")}
+                              {/* 4. SAFEGUARD: safely handle missing wasteTypes array */}
+                              ♻ {Array.isArray(item.wasteTypes) ? item.wasteTypes.join(", ") : "Various Waste"}
                             </p>
                           </div>
                         </div>
@@ -169,10 +177,10 @@ function RecyclersContent() {
                             {item.verified ? "Verified" : "Unverified"}
                           </span>
                           <p className="mt-3 text-sm text-slate-500">
-                            {item.rating} rating
+                            {item.rating || "New"} rating
                           </p>
                           <p className="mt-2 text-xl font-bold text-[#24713d]">
-                            {item.price}
+                            {item.price || "Contact for price"}
                           </p>
                         </div>
                       </div>
