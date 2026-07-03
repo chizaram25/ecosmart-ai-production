@@ -67,7 +67,7 @@ export default function IndividualSignUpPage() {
     e.preventDefault();
     if (!isFormValid) return;
     try {
-      const result = await authApi.register(name, email, password);
+      const result = await authApi.register(name, email, password, phone.replace(/D/g, ""));
       if (result && result.token) {
         setToken(result.token);
         if (result.user) setUser(result.user);

@@ -70,10 +70,10 @@ export const authApi = {
       { method: 'POST', body: JSON.stringify({ email, password }) }
     ),
 
-  register: (name: string, email: string, password: string) =>
+  register: (name: string, email: string, password: string, phone?: string) =>
     request<{ token: string; user: { id: string; name: string; email: string } }>(
       '/auth/register',
-      { method: 'POST', body: JSON.stringify({ name, email, password }) }
+      { method: 'POST', body: JSON.stringify({ name, email, password, phone }) }
     ),
 
   getMe: () =>
