@@ -13,6 +13,7 @@ import {
   BarChart3,
   UserCircle2,
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const wasteOptions = [
   "Plastic Bottle",
@@ -33,6 +34,7 @@ type typeprops = {
 
 export default function ManualTypePage({ openSidebar }: typeprops) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -56,7 +58,9 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
 
     localStorage.setItem("manualWasteType", query.trim());
     localStorage.setItem("scanSource", "manual");
-    router.push("/dashboard/scan/analyze");
+    
+    // ✅ Updated route: Sends user to the main scanner to trigger analysis
+    router.push("/dashboard/scan");
   };
 
   return (
@@ -69,8 +73,8 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                 <div className="flex items-center gap-2">
                   <img
                     src="/images/logo.png"
-                      alt="EcoSmart AI Logo"
-                      className="h-10 w-auto object-contain"
+                    alt="EcoSmart AI Logo"
+                    className="h-10 w-auto object-contain"
                   />
                 </div>
 
@@ -78,7 +82,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   onClick={openSidebar}
                   className="rounded-xl p-2 text-slate-700 transition hover:bg-white"
                   aria-label="Open navigation"
-                  >
+                >
                   <Menu className="h-6 w-6" />
                 </button>
               </header>
@@ -89,22 +93,22 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   className="inline-flex items-center gap-2 text-base text-slate-600"
                 >
                   <ArrowLeft className="h-5 w-5" />
-                  Back
+                  {t("common.back")}
                 </Link>
 
                 <div className="mt-8">
                   <h1 className="text-[2rem] font-bold text-slate-900">
-                    Type Your Waste
+                    {t("scanner.typeYourWaste")}
                   </h1>
                   <p className="mt-2 text-lg text-slate-500">
-                    Select or type the waste item to continue analysis.
+                    {t("scanner.selectOrType")}
                   </p>
                 </div>
 
                 <div className="mt-8 space-y-5">
                   <div className="relative">
                     <label className="mb-3 block text-base font-semibold text-slate-700">
-                      Waste Item
+                      {t("scanner.wasteItem")}
                     </label>
 
                     <div className="flex items-center gap-3 rounded-[22px] border border-[#d9e5d4] bg-white px-4 py-4 shadow-sm">
@@ -149,7 +153,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                           ))
                         ) : (
                           <div className="px-4 py-3 text-base text-slate-400">
-                            No matching item found
+                            {t("scanner.noMatch")}
                           </div>
                         )}
                       </div>
@@ -157,9 +161,9 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   </div>
 
                   <div className="rounded-3xl bg-[#eef6ea] px-5 py-4 text-base text-[#2f7d32]">
-                    Selected:{" "}
+                    {t("scanner.selected")}{" "}
                     <span className="font-semibold">
-                      {selectedOption || query || "None"}
+                      {selectedOption || query || t("scanner.none")}
                     </span>
                   </div>
 
@@ -169,7 +173,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                     disabled={!query.trim()}
                     className="w-full rounded-[22px] bg-[#5d9d35] px-6 py-5 text-center text-xl font-semibold text-white shadow-[0_16px_35px_rgba(93,157,53,0.25)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Analyze Waste
+                    {t("scanner.analyzeWaste")}
                   </button>
                 </div>
               </div>
@@ -180,7 +184,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   className="flex flex-col items-center justify-center gap-2 rounded-2xl py-2 text-sm"
                 >
                   <Home className="h-6 w-6 text-slate-400" />
-                  <span className="font-medium text-slate-400">Home</span>
+                  <span className="font-medium text-slate-400">{t("common.home")}</span>
                 </Link>
 
                 <Link
@@ -188,7 +192,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   className="flex flex-col items-center justify-center gap-2 rounded-2xl py-2 text-sm"
                 >
                   <ScanLine className="h-6 w-6 text-[#5c9d35]" />
-                  <span className="font-medium text-[#5c9d35]">Scan</span>
+                  <span className="font-medium text-[#5c9d35]">{t("common.scan")}</span>
                 </Link>
 
                 <Link
@@ -196,7 +200,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   className="flex flex-col items-center justify-center gap-2 rounded-2xl py-2 text-sm"
                 >
                   <BarChart3 className="h-6 w-6 text-slate-400" />
-                  <span className="font-medium text-slate-400">Activity</span>
+                  <span className="font-medium text-slate-400">{t("common.activity")}</span>
                 </Link>
 
                 <Link
@@ -204,7 +208,7 @@ export default function ManualTypePage({ openSidebar }: typeprops) {
                   className="flex flex-col items-center justify-center gap-2 rounded-2xl py-2 text-sm"
                 >
                   <UserCircle2 className="h-6 w-6 text-slate-400" />
-                  <span className="font-medium text-slate-400">Profile</span>
+                  <span className="font-medium text-slate-400">{t("common.profile")}</span>
                 </Link>
               </nav>
             </div>

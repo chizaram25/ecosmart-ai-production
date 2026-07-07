@@ -1,0 +1,366 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  Globe, User, Mail, Lock, Eye, EyeOff,
+  AlertCircle, Check, CheckCircle2
+} from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { setToken, setUser } from '@/lib/auth';
+import { useLanguage } from "@/context/LanguageContext";
+
+export default function RecyclerSignUpPage() {
+  const router = useRouter();
+  const { t, currentLang } = useLanguage();
+
+  // Form State
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreed, setAgreed] = useState(false);
+
+  // UI State
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // FIX 1: Added a state variable to catch and display backend errors
+  const [apiError, setApiError] = useState(''); 
+
+  // Field Validation States
+  const [isNameValid, setIsNameValid] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
+
+  // Password Strength States
+  const [hasLength, setHasLength] = useState(false);
+  const [hasUpper, setHasUpper] = useState(false);
+  const [hasNumberOrSpecial, setHasNumberOrSpecial] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isConfirmValid, setIsConfirmValid] = useState(false);
+
+  // Overall Form Validation
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Real-time Validation Effect
+  useEffect(() => {
+    const nameValid = name.trim().length >= 3;
+    setIsNameValid(nameValid);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailValid = emailRegex.test(email);
+    setIsEmailValid(emailValid);
+
+    const phoneRegex = /^\d{10}$/;
+    const cleanPhone = phone.replace(/\s/g, '');
+    const phoneValid = phoneRegex.test(cleanPhone);
+    setIsPhoneValid(phoneValid);
+
+    const lengthValid = password.length >= 8;
+    const upperValid = /[A-Z]/.test(password);
+    const numOrSpecialValid = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    setHasLength(lengthValid);
+    setHasUpper(upperValid);
+    setHasNumberOrSpecial(numOrSpecialValid);
+
+    const passValid = lengthValid && upperValid && numOrSpecialValid;
+    setIsPasswordValid(passValid);
+
+    const confirmMatch = password === confirmPassword && confirmPassword.length > 0;
+    setIsConfirmValid(confirmMatch);
+
+    setIsFormValid(nameValid && emailValid && phoneValid && passValid && confirmMatch && agreed);
+  }, [name, email, phone, password, confirmPassword, agreed]);
+
+  // FIX 2: Clear API error when user tries typing a new email
+  useEffect(() => {
+    if (apiError) setApiError('');
+  }, [email, phone]);
+
+  // Password Strength Score (0 to 4)
+  const getStrengthScore = () => {
+    if (password.length === 0) return 0;
+    let score = 1;
+    if (hasLength) score += 1;
+    if (hasUpper) score += 1;
+    if (hasNumberOrSpecial) score += 1;
+    return score;
+  };
+
+  const score = getStrengthScore();
+
+  const getStrengthDisplay = () => {
+    if (score === 0) return { text: '', color: 'bg-gray-200', textColor: '' };
+    if (score <= 2) return { text: t("signUp.weak") || "Weak", color: 'bg-red-500', textColor: 'text-red-500' };
+    if (score === 3) return { text: t("signUp.fair") || "Fair", color: 'bg-amber-400', textColor: 'text-amber-500' };
+    return { text: t("signUp.strong") || "Strong", color: 'bg-[#549B45]', textColor: 'text-[#549B45]' };
+  };
+
+  const strength = getStrengthDisplay();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid || loading) return;
+    
+    setLoading(true);
+    setApiError(''); // Clear old errors before trying again
+    
+    try {
+      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'recycler');
+      
+      if (result && result.token) {
+        setToken(result.token);
+        if (result.user) setUser(result.user);
+        
+        router.push('/auth/recycler/build-profile');
+      }
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      // FIX 3: Capture the actual error message from the backend so the user can read it
+      setApiError(err.message || "Email or phone number is already registered. Please try logging in.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white font-sans flex flex-col relative overflow-hidden">
+
+      <div className="absolute top-0 left-0 w-full h-56 md:h-72 lg:h-80 bg-[#f6fcf4] z-0">
+         <svg
+           viewBox="0 0 1200 120"
+           preserveAspectRatio="none"
+           className="absolute bottom-0 w-full h-12 md:h-20 lg:h-24 block"
+           fill="#ffffff"
+         >
+           <path d="M0,120 L1200,120 L1200,0 Q600,140 0,0 Z" />
+         </svg>
+      </div>
+
+      <header className="relative z-20 w-full flex justify-end px-6 md:px-12 lg:px-24 pt-6 pb-4">
+        <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer shadow-sm">
+          <Globe className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-600">{t("common.english") || "English"}</span>
+        </button>
+      </header>
+
+      <main className="relative z-10 flex-grow w-full max-w-6xl mx-auto px-6 md:px-12 lg:px-20 pt-4 md:pt-12 pb-20 flex flex-col items-center">
+
+        <div className="text-center mb-8 md:mb-12 w-full max-w-2xl">
+          <h1 className="text-[28px] md:text-4xl lg:text-5xl leading-tight font-bold text-[#1b5030] mb-3 md:mb-5 transition-all">
+            {t("signUp.recyclerTitle") || "Sign up as a Recycler"}
+          </h1>
+          <p className="text-[13px] md:text-base text-gray-500 font-medium leading-relaxed px-4">
+            {t("signUp.recyclerDesc") || "Create an account to start accepting waste and growing your recycling business."}
+          </p>
+        </div>
+
+        <div className="w-full bg-white md:bg-gray-50/30 md:border md:border-gray-100 md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:p-10 lg:p-12">
+
+          <div className="flex justify-center mb-10">
+            <div className="flex items-center gap-2 bg-[#eaf4e7] rounded-full px-4 py-1.5 md:py-2 md:px-5 transition-all">
+              <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#449339]" />
+              <span className="text-[13px] md:text-sm font-medium text-[#449339]">
+                {t("signUp.signingUpAsRecycler") || "Signing up as a Recycler"}
+              </span>
+              <Link
+                href="/auth/individual/sign-up"
+                className="text-[13px] md:text-sm font-medium text-gray-500 hover:text-[#1b5030] ml-2 transition-colors underline-offset-2 hover:underline"
+              >
+                {t("signIn.change") || "Change"}
+              </Link>
+            </div>
+          </div>
+
+          <form className="w-full" onSubmit={handleSubmit}>
+
+            {/* FIX 4: Visually display the API error above the form if it exists */}
+            {apiError && (
+              <div className="mb-6 w-full max-w-2xl mx-auto flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-sm font-medium leading-snug">{apiError}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              
+              <div>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
+                  {t("signUp.businessName") || "Business Name"}
+                </label>
+                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+                  <User className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    name="name" placeholder="Eco Waste Ltd."
+                    className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
+                  />
+                  {isNameValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
+                  {t("signUp.emailAddress") || "Email Address"}
+                </label>
+                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+                  <Mail className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    name="email" placeholder="example@mail.com"
+                    className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
+                  />
+                  {isEmailValid && <Check className="w-5 h-5 text-[#449339] ml-2 shrink-0 animate-in zoom-in" />}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 w-full">
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
+                  {t("signUp.phoneNumber") || "Phone Number"}
+                </label>
+                <div className={`relative flex items-center border rounded-2xl bg-white overflow-hidden transition-colors shadow-sm ${!isPhoneValid && phoneTouched ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
+                  <div className="flex items-center gap-2 px-4 py-3.5 bg-white border-r border-gray-200 shrink-0">
+                    <div className="w-5 h-3.5 bg-green-600 rounded-[2px] relative overflow-hidden flex shadow-sm">
+                      <div className="w-1/3 h-full bg-green-600"></div>
+                      <div className="w-1/3 h-full bg-white"></div>
+                      <div className="w-1/3 h-full bg-green-600"></div>
+                    </div>
+                    <span className="text-[14px] md:text-[15px] font-medium text-gray-700">+234</span>
+                  </div>
+
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setPhoneTouched(true);
+                    }}
+                    name="phone" placeholder="901 234 5678"
+                    className="w-full px-4 py-3.5 outline-none text-[14px] md:text-[15px] text-gray-900 bg-transparent"
+                  />
+                  {isPhoneValid && <Check className="w-5 h-5 text-[#449339] mr-4 shrink-0 animate-in zoom-in" />}
+                  {!isPhoneValid && phoneTouched && (
+                    <AlertCircle className="w-5 h-5 text-red-500 mr-4 shrink-0" />
+                  )}
+                </div>
+                {!isPhoneValid && phoneTouched && phone.length > 0 && (
+                  <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {t("common.enterValidNumber") || "Enter a valid 10-digit number"}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">{t("signIn.password") || "Password"}</label>
+                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+                  <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    name="password" placeholder={t("signUp.createPassword") || "Create Password"}
+                    className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                <div className="w-full mt-1 px-1">
+                  <div className="flex gap-1 mb-1.5 h-1.5">
+                    {[1, 2, 3, 4].map((bar) => (
+                      <div
+                        key={bar}
+                        className={`flex-1 rounded-full transition-colors duration-300 ${
+                          score >= bar ? strength.color : 'bg-gray-200'
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                  {password.length > 0 && (
+                    <p className={`text-[12px] font-bold transition-colors ${strength.textColor}`}>
+                      {strength.text}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-gray-400 mt-1 leading-snug">
+                    {t("signUp.passwordStrength") || "8+ chars, 1 uppercase, 1 number/special"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">{t("signUp.confirmPwd") || "Confirm Password"}</label>
+                <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
+                  <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    name="password" placeholder={t("signUp.confirmPwd") || "Confirm Password"}
+                    className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-10 md:mt-12 max-w-2xl mx-auto w-full flex flex-col items-center">
+
+              <div className="flex items-start md:items-center justify-center gap-3 mb-6 w-full">
+                <div
+                  className={`w-5 h-5 rounded-full border flex items-center justify-center cursor-pointer mt-0.5 md:mt-0 shrink-0 transition-colors ${agreed ? 'bg-[#449339] border-[#449339]' : 'border-gray-300'}`}
+                  onClick={() => setAgreed(!agreed)}
+                >
+                  {agreed && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <p className="text-[13px] md:text-sm text-gray-700 leading-snug">
+                  {t("common.iAgree") || "I agree to the"} <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">{t("common.termsAndConditions") || "Terms and Conditions"}</a> {t("common.and") || "and"} <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">{t("common.privacyPolicy") || "Privacy Policy"}</a>
+                </p>
+              </div>
+
+              <button
+                disabled={!isFormValid || loading}
+                className={`w-full py-4 rounded-full font-semibold text-[15px] md:text-[16px] transition-all duration-300 ${
+                  isFormValid && !loading
+                    ? 'bg-[#549B45] text-white shadow-lg shadow-green-900/20 hover:bg-[#458237] hover:-translate-y-0.5 cursor-pointer'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {loading ? (t("common.creatingAccount") || "Creating Account...") : (t("common.createAccount") || "Create Account")}
+              </button>
+
+              <div className="text-center w-full mt-8">
+                <p className="text-[13px] md:text-sm text-gray-600">
+                  {t("common.alreadyHaveAccount") || "Already have an account?"} <Link href="/auth/recycler/sign-in" className="font-bold text-[#1b5030] hover:text-[#449339] transition-colors hover:underline underline-offset-2">{t("common.signIn") || "Sign In"}</Link>
+                </p>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </main>
+    </div>
+  );
+}

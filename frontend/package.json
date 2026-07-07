@@ -21,8 +21,7 @@
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^1.8.0",
-    "next": "^16.2.3",
-    "next-pwa": "^2.0.2",
+    "next": "^16.2.10",
     "openai": "^6.34.0",
     "react": "^18",
     "react-dom": "^18",
@@ -39,7 +38,7 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10",
     "eslint": "^9",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "^16.2.10",
     "postcss": "^8",
     "tailwindcss": "^4",
     "typescript": "^5"

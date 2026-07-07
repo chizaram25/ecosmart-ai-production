@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Leaf,
@@ -14,6 +14,10 @@ import {
 
 import BottomNav from "@/components/dashboard/BottomNav";
 import { navItems } from "@/lib/dashboard-data";
+import { useLanguage } from "@/context/LanguageContext";
+import { wasteApi } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+import type { WasteScanResult } from "@/lib/api";
 
 type ActivityStatus = "Recycled" | "Pending";
 
@@ -27,91 +31,90 @@ type ActivityRecord = {
   status: ActivityStatus;
 };
 
-const mockActivities: ActivityRecord[] = [
-  {
-    id: "1",
-    title: "Plastic Bottles",
-    dateLabel: "Today",
-    relativeTime: "2 hours ago",
-    amount: 450,
-    weightKg: 2.5,
-    status: "Recycled",
-  },
-  {
-    id: "2",
-    title: "Aluminum Cans",
-    dateLabel: "Yesterday",
-    relativeTime: "Yesterday",
-    amount: 320,
-    weightKg: 1.8,
-    status: "Recycled",
-  },
-  {
-    id: "3",
-    title: "Paper Waste",
-    dateLabel: "Apr 5, 2026",
-    relativeTime: "2 days ago",
-    amount: 180,
-    weightKg: 3.2,
-    status: "Pending",
-  },
-  {
-    id: "4",
-    title: "Glass Bottles",
-    dateLabel: "Apr 4, 2026",
-    relativeTime: "3 days ago",
-    amount: 520,
-    weightKg: 4.1,
-    status: "Recycled",
-  },
-  {
-    id: "5",
-    title: "Cardboard",
-    dateLabel: "Apr 3, 2026",
-    relativeTime: "4 days ago",
-    amount: 280,
-    weightKg: 5.0,
-    status: "Recycled",
-  },
-  {
-    id: "6",
-    title: "Metal Scraps",
-    dateLabel: "Apr 2, 2026",
-    relativeTime: "5 days ago",
-    amount: 650,
-    weightKg: 6.3,
-    status: "Pending",
-  },
-  {
-    id: "7",
-    title: "Plastic Containers",
-    dateLabel: "Apr 1, 2026",
-    relativeTime: "6 days ago",
-    amount: 410,
-    weightKg: 3.7,
-    status: "Recycled",
-  },
-];
+function getDateLabel(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+  return date.toLocaleDateString();
+}
+
+function scanToActivity(scan: WasteScanResult): ActivityRecord {
+  return {
+    id: scan._id,
+    title: scan.wasteType,
+    dateLabel: getDateLabel(scan.createdAt),
+    relativeTime: getRelativeTime(scan.createdAt),
+    amount: Math.round(((scan.estimatedValue?.min || 0) + (scan.estimatedValue?.max || 0)) / 2),
+    weightKg: 0, // Backend doesn't track weight yet
+    status: scan.recyclable ? "Recycled" : "Pending",
+  };
+}
 
 type FilterType = "All" | "Recycled" | "Pending";
 
 export default function ActivityPage() {
+  const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [activeTab, setActiveTab] = useState<
     "home" | "scan" | "activity" | "profile"
   >("activity");
 
-  const filteredActivities = useMemo(() => {
-    if (activeFilter === "All") return mockActivities;
-    return mockActivities.filter((item) => item.status === activeFilter);
-  }, [activeFilter]);
+  const [scans, setScans] = useState<WasteScanResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const totalEarned = mockActivities.reduce((sum, item) => sum + item.amount, 0);
-  const totalKg = mockActivities.reduce((sum, item) => sum + item.weightKg, 0);
-  const recycledCount = mockActivities.filter(
+  if (typeof window === "undefined") return null;
+
+  useEffect(() => {
+    if (!getToken()) return;
+    setLoading(true);
+    wasteApi
+      .getHistory()
+      .then((data) => setScans(data || []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activities: ActivityRecord[] = useMemo(
+    () => scans.map(scanToActivity),
+    [scans]
+  );
+
+  const filteredActivities = useMemo(() => {
+    if (activeFilter === "All") return activities;
+    return activities.filter((item) => item.status === activeFilter);
+  }, [activities, activeFilter]);
+
+  const totalEarned = activities.reduce((sum, item) => sum + item.amount, 0);
+  const totalKg = activities.reduce((sum, item) => sum + item.weightKg, 0);
+  const recycledCount = activities.filter(
     (item) => item.status === "Recycled"
   ).length;
-  const thisWeekCount = mockActivities.length;
+  const thisWeekCount = activities.length;
 
   return (
     <main className="min-h-screen bg-[#edf3ea]">
@@ -122,22 +125,22 @@ export default function ActivityPage() {
               <header className="flex items-center justify-between bg-[#f3f4f6] px-5 pb-4 pt-5 sm:px-8 sm:pb-5 sm:pt-7 lg:px-10 lg:pt-8">
                 <div className="flex items-center gap-2 font-semibold text-[#2f7d32]">
                   <div className="flex items-center gap-2">
-                  <img
-                    src="/images/logo.png"
+                    <img
+                      src="/images/logo.png"
                       alt="EcoSmart AI Logo"
                       className="h-10 w-auto object-contain"
-                  />
-                </div>
+                    />
+                  </div>
                 </div>
               </header>
 
               <div className="flex-1 px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
                 <div>
                   <h1 className="text-[2rem] font-bold text-[#246c3b] sm:text-[2.3rem] lg:text-[2.7rem]">
-                    Activity
+                    {t("common.activity")}
                   </h1>
                   <p className="mt-2 text-base text-slate-500 sm:text-lg">
-                    Track your recycling journey
+                    {t("dashboard.trackJourney")}
                   </p>
                 </div>
 
@@ -145,129 +148,156 @@ export default function ActivityPage() {
                   <StatCard
                     icon={<TrendingUp className="h-5 w-5" />}
                     iconWrapClass="bg-[#ddebd6] text-[#5b9938]"
-                    value={`₦${totalEarned}`}
-                    label="Total Earned"
+                    value={`₦${totalEarned.toLocaleString()}`}
+                    label={t("dashboard.totalEarned")}
                   />
                   <StatCard
                     icon={<Package className="h-5 w-5" />}
                     iconWrapClass="bg-[#f8ebc7] text-[#d9a11b]"
-                    value={`${Math.round(totalKg * 100)}`}
-                    label="Total kg"
+                    value={`${totalKg}kg`}
+                    label={t("dashboard.totalKg")}
                   />
                   <StatCard
                     icon={<Recycle className="h-5 w-5" />}
                     iconWrapClass="bg-[#dff4e6] text-[#22b455]"
                     value={`${recycledCount}`}
-                    label="Items Recycled"
+                    label={t("dashboard.itemsRecycled")}
                   />
                   <StatCard
                     icon={<CalendarDays className="h-5 w-5" />}
                     iconWrapClass="bg-[#dfe9d9] text-[#2f7d32]"
                     value={`${thisWeekCount}`}
-                    label="This Week"
+                    label={t("dashboard.thisWeek")}
                   />
                 </section>
 
-                <section className="mt-8">
-                  <div className="flex gap-3 overflow-x-auto">
-                    {(["All", "Recycled", "Pending"] as FilterType[]).map(
-                      (filter) => (
+                {/* Loading / Error / Empty states */}
+                {loading && (
+                  <div className="mt-8 text-center text-slate-500">{t("common.loading")}</div>
+                )}
+                {error && (
+                  <div className="mt-8 rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+                    {error}
+                  </div>
+                )}
+
+                {!loading && !error && (
+                  <>
+                    <section className="mt-8">
+                      <div className="flex gap-3 overflow-x-auto">
+                        {(["All", "Recycled", "Pending"] as FilterType[]).map(
+                          (filter) => (
+                            <button
+                              key={filter}
+                              type="button"
+                              onClick={() => setActiveFilter(filter)}
+                              className={`whitespace-nowrap rounded-full px-5 py-3 text-sm font-medium transition sm:text-base ${
+                                activeFilter === filter
+                                  ? "bg-[#5d9d35] text-white shadow-[0_10px_20px_rgba(93,157,53,0.22)]"
+                                  : "bg-white text-slate-600 hover:bg-[#eef7ea]"
+                              }`}
+                            >
+                              {filter}
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="mt-8">
+                      <div className="mb-5 flex items-center justify-between gap-4">
+                        <h2 className="text-[1.35rem] font-semibold text-[#246c3b] sm:text-[1.55rem]">
+                          History ({filteredActivities.length})
+                        </h2>
                         <button
-                          key={filter}
                           type="button"
-                          onClick={() => setActiveFilter(filter)}
-                          className={`whitespace-nowrap rounded-full px-5 py-3 text-sm font-medium transition sm:text-base ${
-                            activeFilter === filter
-                              ? "bg-[#5d9d35] text-white shadow-[0_10px_20px_rgba(93,157,53,0.22)]"
-                              : "bg-white text-slate-600 hover:bg-[#eef7ea]"
-                          }`}
+                          className="inline-flex items-center gap-2 text-slate-600"
                         >
-                          {filter}
+                          <Filter className="h-5 w-5" />
+                          <span className="text-sm font-medium sm:text-base">
+                            {t("common.filter")}
+                          </span>
                         </button>
-                      )
-                    )}
-                  </div>
-                </section>
+                      </div>
 
-                <section className="mt-8">
-                  <div className="mb-5 flex items-center justify-between gap-4">
-                    <h2 className="text-[1.35rem] font-semibold text-[#246c3b] sm:text-[1.55rem]">
-                      History ({filteredActivities.length})
-                    </h2>
+                      {filteredActivities.length === 0 ? (
+                        <div className="rounded-3xl bg-white px-5 py-10 text-center text-slate-400 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                          <Recycle className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+                          <p className="text-lg font-medium">{t("common.noActivityYet")}</p>
+                          <p className="mt-1 text-sm">{t("dashboard.startScanning")}</p>
+                          <Link
+                            href="/dashboard/scan"
+                            className="mt-4 inline-block rounded-full bg-[#5d9d35] px-6 py-2 text-sm font-semibold text-white"
+                          >
+                            {t("common.scanNow")}
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {filteredActivities.map((item) => {
+                            const isRecycled = item.status === "Recycled";
 
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 text-slate-600"
-                    >
-                      <Filter className="h-5 w-5" />
-                      <span className="text-sm font-medium sm:text-base">
-                        Filter
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {filteredActivities.map((item) => {
-                      const isRecycled = item.status === "Recycled";
-
-                      return (
-                        <article
-                          key={item.id}
-                          className="rounded-3xl bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex min-w-0 items-start gap-4">
-                              <div
-                                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
-                                  isRecycled
-                                    ? "bg-[#e5f4e8] text-[#22b455]"
-                                    : "bg-[#eef0f3] text-slate-500"
-                                }`}
+                            return (
+                              <article
+                                key={item.id}
+                                className="rounded-3xl bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
                               >
-                                {isRecycled ? (
-                                  <Leaf className="h-7 w-7" />
-                                ) : (
-                                  <Clock3 className="h-7 w-7" />
-                                )}
-                              </div>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex min-w-0 items-start gap-4">
+                                    <div
+                                      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
+                                        isRecycled
+                                          ? "bg-[#e5f4e8] text-[#22b455]"
+                                          : "bg-[#eef0f3] text-slate-500"
+                                      }`}
+                                    >
+                                      {isRecycled ? (
+                                        <Leaf className="h-7 w-7" />
+                                      ) : (
+                                        <Clock3 className="h-7 w-7" />
+                                      )}
+                                    </div>
 
-                              <div className="min-w-0">
-                                <h3 className="truncate text-xl font-semibold text-slate-900">
-                                  {item.title}
-                                </h3>
-                                <p className="mt-1 text-base text-slate-500">
-                                  {item.dateLabel}
-                                </p>
-                              </div>
-                            </div>
+                                    <div className="min-w-0">
+                                      <h3 className="truncate text-xl font-semibold text-slate-900">
+                                        {item.title}
+                                      </h3>
+                                      <p className="mt-1 text-base text-slate-500">
+                                        {item.dateLabel}
+                                      </p>
+                                    </div>
+                                  </div>
 
-                            <div className="text-right">
-                              <p className="text-[1.8rem] font-bold text-[#24713d]">
-                                ₦{item.amount}
-                              </p>
-                              <span
-                                className={`mt-2 inline-flex rounded-full px-4 py-1 text-sm font-medium ${
-                                  isRecycled
-                                    ? "bg-[#e5f4e8] text-[#22b455]"
-                                    : "bg-[#f1f2f5] text-slate-500"
-                                }`}
-                              >
-                                {item.status}
-                              </span>
-                            </div>
-                          </div>
+                                  <div className="text-right">
+                                    <p className="text-[1.8rem] font-bold text-[#24713d]">
+                                      ₦{item.amount}
+                                    </p>
+                                    <span
+                                      className={`mt-2 inline-flex rounded-full px-4 py-1 text-sm font-medium ${
+                                        isRecycled
+                                          ? "bg-[#e5f4e8] text-[#22b455]"
+                                          : "bg-[#f1f2f5] text-slate-500"
+                                      }`}
+                                    >
+                                      {item.status}
+                                    </span>
+                                  </div>
+                                </div>
 
-                          <div className="mt-4 border-t border-slate-200 pt-4">
-                            <div className="flex items-center justify-between text-sm text-slate-500 sm:text-base">
-                              <span>{item.relativeTime}</span>
-                              <span>{item.weightKg.toFixed(1)} kg</span>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
+                                <div className="mt-4 border-t border-slate-200 pt-4">
+                                  <div className="flex items-center justify-between text-sm text-slate-500 sm:text-base">
+                                    <span>{item.relativeTime}</span>
+                                    <span>{item.weightKg.toFixed(1)} kg</span>
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+                  </>
+                )}
               </div>
 
               <BottomNav

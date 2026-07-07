@@ -1,53 +1,42 @@
-import Image from 'next/image';
-import { CheckCircleIcon as ScanIcon, CurrencyDollarIcon as DollarIcon, SparklesIcon as LeafIcon } from '@heroicons/react/24/outline';
+'use client';
 
-
-
+import { Home, Recycle, ChevronRight } from 'lucide-react';
+import { useLanguage } from "@/context/LanguageContext";
 
 export function FeatureCards() {
-  const cards = [
-    {
-      title: 'Scan Waste',
-      description: 'Use AI to identify waste instantly',
-      icon: ScanIcon,
-    },
-    {
-      title: 'Earn Money',
-      description: 'Get value from recyclable items',
-      icon: DollarIcon,
-    },
-    {
-      title: 'Reduce Climate Impact',
-      description: 'Make smarter eco decisions',
-      icon: LeafIcon,
-    },
-  ];
-
+  const { t } = useLanguage();
   return (
-    <section className="space-y-4 px-5 py-8 sm:px-8">
-      {cards.map((card) => {
-        const Icon = card.icon;
-
-        return (
-          <div
-            key={card.title}
-            className="flex items-start gap-4 rounded-3xl border border-[#eef1eb] bg-white p-5 shadow-[0_10px_26px_rgba(18,25,38,0.05)] transition hover:-translate-y-0.5"
-          >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#eaf5e6] text-[#3f8742]">
-              <Icon className="h-6 w-6" />
+    <section className="w-full max-w-6xl mx-auto px-6 mb-20 md:mb-28">
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">
+        {t("landing.builtForEveryone")}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl md:rounded-[2rem] p-5 md:p-8 flex items-center justify-between cursor-pointer hover:border-[#549B45] hover:shadow-xl transition-all duration-300 group">
+          <div className="flex items-center gap-5 md:gap-6">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-[#f1f7ef] rounded-full flex items-center justify-center group-hover:bg-[#549B45] transition-colors">
+              <Home className="w-6 h-6 md:w-8 md:h-8 text-[#549B45] group-hover:text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-semibold tracking-[-0.02em] text-slate-800 sm:text-xl">
-                {card.title}
-              </h3>
-              <p className="mt-1 text-base text-slate-500">{card.description}</p>
+              <h4 className="font-bold text-[16px] md:text-xl text-gray-900 mb-1">{t("landing.forHouseholds")}</h4>
+              <p className="text-[13px] md:text-[15px] text-gray-500">{t("landing.forHouseholdsDesc")}</p>
             </div>
           </div>
-        );
-      })}
+          <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-300 group-hover:text-[#549B45]" />
+        </div>
+
+        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl md:rounded-[2rem] p-5 md:p-8 flex items-center justify-between cursor-pointer hover:border-[#549B45] hover:shadow-xl transition-all duration-300 group">
+          <div className="flex items-center gap-5 md:gap-6">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-[#f1f7ef] rounded-full flex items-center justify-center group-hover:bg-[#549B45] transition-colors">
+              <Recycle className="w-6 h-6 md:w-8 md:h-8 text-[#549B45] group-hover:text-white" />
+            </div>
+            <div>
+              <h4 className="font-bold text-[16px] md:text-xl text-gray-900 mb-1">{t("landing.forRecyclers")}</h4>
+              <p className="text-[13px] md:text-[15px] text-gray-500">{t("landing.forRecyclersDesc")}</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-300 group-hover:text-[#549B45]" />
+        </div>
+      </div>
     </section>
   );
 }
-
-
-

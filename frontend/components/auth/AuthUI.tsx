@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LucideIcon, Menu, Leaf } from 'lucide-react'
+import { LucideIcon, Menu } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { ReactNode } from 'react'
 
@@ -142,16 +142,12 @@ export function BackTextLink({ href, children }: { href: string; children: React
 
 function Brand() {
     return (
-        <div className="flex items-center gap-2.5 text-[1.2rem] font-extrabold text-[#1d6b3f] sm:text-[1.72rem]" aria-label="EcoSmart AI">
-            <span
-                className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#86c86a] to-[#4f9132] text-white shadow-[inset_0_0_0_2px_rgba(255,255,255,0.5)] sm:h-[34px] sm:w-[34px]"
-                aria-hidden="true"
-            >
-                <Leaf size={17} strokeWidth={2.25} />
-            </span>
-            <span>
-                EcoSmart <em className="not-italic text-[#2f7e46]">AI</em>
-            </span>
+        <div aria-label="EcoSmart AI">
+            <img
+                src="/images/logo.png"
+                alt="EcoSmart AI"
+                className="h-8 w-auto object-contain"
+            />
         </div>
     )
 }

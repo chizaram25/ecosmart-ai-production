@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Leaf,
   ArrowLeft,
@@ -17,64 +18,58 @@ import {
 import CallModal from "@/components/recycler/CallModal";
 import ChatModal from "@/components/recycler/ChatModal";
 
-type RecyclerItem = {
-  id: number;
-  name: string;
-  distance: string;
-  types: string;
-  price: string;
-  phone: string;
-  chatNumber: string;
-  rating: string;
-  verified: boolean;
-};
+import { recyclerApi } from "@/lib/api";
+import type { RecyclerData } from "@/lib/api";
 
-type LocationOption = {
-  state: string;
-  address: string;
-  mapQuery: string;
-};
+function RecyclerDetailsContent() {
+  const searchParams = useSearchParams();
+  const recyclerId = searchParams.get("id");
 
-type StoredDetails = {
-  recycler: RecyclerItem;
-  location: LocationOption;
-};
-
-export default function RecyclerDetailsPage() {
-  const [details, setDetails] = useState<StoredDetails | null>(null);
-  const [scannedImage, setScannedImage] = useState("");
+  const [recycler, setRecycler] = useState<RecyclerData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
 
   useEffect(() => {
-    const storedDetails = sessionStorage.getItem("selectedRecyclerDetails");
-    const storedImage = sessionStorage.getItem("scannedWasteImage");
-
-    if (storedDetails) {
-      setDetails(JSON.parse(storedDetails));
+    if (!recyclerId) {
+      setError("No recycler selected.");
+      setLoading(false);
+      return;
     }
 
-    if (storedImage) {
-      setScannedImage(storedImage);
-    }
-  }, []);
+    recyclerApi
+      .getById(recyclerId)
+      .then((data) => setRecycler(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [recyclerId]);
 
   const mapSrc = useMemo(() => {
-    if (!details?.location?.mapQuery) return "";
-    return `https://www.google.com/maps?q=${encodeURIComponent(
-      details.location.mapQuery
-    )}&z=13&output=embed`;
-  }, [details]);
+    if (!recycler?.mapQuery) return "";
+    return `https://www.google.com/maps?q=${encodeURIComponent(recycler.mapQuery)}&z=13&output=embed`;
+  }, [recycler]);
 
-  if (!details) {
+  if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea] px-4">
-        <p className="text-slate-500">No recycler selected yet.</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
       </main>
     );
   }
 
-  const { recycler, location } = details;
+  if (error || !recycler) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea] px-4">
+        <div className="text-center">
+          <p className="text-slate-500">{error || "No recycler selected yet."}</p>
+          <Link href="/dashboard/recyclers" className="mt-4 inline-block text-[#5d9d35] font-semibold">
+            ← Back to recyclers
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#edf3ea]">
@@ -86,8 +81,8 @@ export default function RecyclerDetailsPage() {
                 <div className="flex items-center gap-2">
                   <img
                     src="/images/logo.png"
-                      alt="EcoSmart AI Logo"
-                      className="h-10 w-auto object-contain"
+                    alt="EcoSmart AI Logo"
+                    className="h-10 w-auto object-contain"
                   />
                 </div>
               </div>
@@ -106,17 +101,9 @@ export default function RecyclerDetailsPage() {
                 {/* Left column */}
                 <div>
                   <section className="overflow-hidden rounded-[28px] bg-[#bce8e8]">
-                    {scannedImage ? (
-                      <img
-                        src={scannedImage}
-                        alt="Scanned waste"
-                        className="h-55 w-full object-cover sm:h-75 lg:h-85"
-                      />
-                    ) : (
-  <div className="flex h-55 w-full items-center justify-center bg-[#d9eeee] text-slate-500 sm:h-75 lg:h-85">
-    No scanned image available
-  </div>
-)}
+                    <div className="flex h-55 w-full items-center justify-center bg-[#d9eeee] text-slate-500 sm:h-75 lg:h-85">
+                      <RecycleIcon />
+                    </div>
                   </section>
 
                   <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -139,16 +126,14 @@ export default function RecyclerDetailsPage() {
                   </h2>
 
                   <div className="mt-4 flex flex-wrap gap-3 text-slate-600">
-                    {["Plastic", "Metal", "Aluminium", "Cables", "Paper"].map(
-                      (item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-white px-4 py-2 shadow-sm"
-                        >
-                          {item}
-                        </span>
-                      )
-                    )}
+                    {recycler.wasteTypes.map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full bg-white px-4 py-2 shadow-sm"
+                      >
+                        {item}
+                      </span>
+                    ))}
                   </div>
 
                   <div className="mt-6 flex flex-col gap-4 sm:flex-row">
@@ -170,42 +155,21 @@ export default function RecyclerDetailsPage() {
                   </div>
 
                   <div className="mt-6 space-y-4">
-                    {[
-                      {
-                        title: "Plastic",
-                        desc: "Clear and tinted bottles",
-                        price: recycler.price,
-                      },
-                      {
-                        title: "Paper",
-                        desc: "Mixed papers and carton",
-                        price: recycler.price,
-                      },
-                      {
-                        title: "Aluminium",
-                        desc: "Soda and beer can",
-                        price: recycler.price,
-                      },
-                      {
-                        title: "Metal",
-                        desc: "Irons and car parts",
-                        price: recycler.price,
-                      },
-                    ].map((material) => (
+                    {recycler.wasteTypes.slice(0, 4).map((material) => (
                       <div
-                        key={material.title}
+                        key={material}
                         className="flex items-center justify-between rounded-[22px] bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:p-5"
                       >
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900">
-                            {material.title}
+                            {material}
                           </h3>
                           <p className="text-sm text-slate-500">
-                            {material.desc}
+                            Accepted for recycling
                           </p>
                         </div>
                         <p className="text-base font-bold text-[#24713d]">
-                          {material.price}
+                          {recycler.price}
                         </p>
                       </div>
                     ))}
@@ -219,17 +183,10 @@ export default function RecyclerDetailsPage() {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#f6ebbb] text-[#f5aa00]">
                         <MapPin className="h-6 w-6" />
                       </div>
-
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                          Location
-                        </h3>
-                        <p className="mt-2 text-base leading-7 text-slate-600">
-                          {location.address}
-                        </p>
-                        <p className="mt-2 font-medium text-slate-800">
-                          Open 6am - Close 5pm
-                        </p>
+                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">Location</h3>
+                        <p className="mt-2 text-base leading-7 text-slate-600">{recycler.address}</p>
+                        <p className="mt-2 font-medium text-slate-800">{recycler.hours}</p>
                       </div>
                     </div>
                   </section>
@@ -248,14 +205,9 @@ export default function RecyclerDetailsPage() {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2f7d32]">
                         <Lightbulb className="h-6 w-6" />
                       </div>
-
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-                          Eco Tip
-                        </h3>
-                        <p className="mt-2 text-base leading-7 text-slate-600">
-                          You can earn more by sorting your waste properly.
-                        </p>
+                        <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">Eco Tip</h3>
+                        <p className="mt-2 text-base leading-7 text-slate-600">You can earn more by sorting your waste properly.</p>
                       </div>
                     </div>
                   </section>
@@ -264,36 +216,17 @@ export default function RecyclerDetailsPage() {
             </div>
 
             <nav className="grid grid-cols-4 border-t border-black/5 bg-[#f3f4f6] px-3 py-3 sm:px-5 lg:px-8">
-              <Link
-                href="/dashboard"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <Home className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Home</span>
+              <Link href="/dashboard" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <Home className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Home</span>
               </Link>
-
-              <Link
-                href="/dashboard/scan"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <ScanLine className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Scan</span>
+              <Link href="/dashboard/scan" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <ScanLine className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Scan</span>
               </Link>
-
-              <Link
-                href="/dashboard/activity"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <BarChart3 className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Activity</span>
+              <Link href="/dashboard/activity" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <BarChart3 className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Activity</span>
               </Link>
-
-              <Link
-                href="/dashboard/profile"
-                className="flex flex-col items-center gap-2 py-2 text-sm"
-              >
-                <UserCircle2 className="h-6 w-6 text-slate-400" />
-                <span className="font-medium text-slate-400">Profile</span>
+              <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 py-2 text-sm">
+                <UserCircle2 className="h-6 w-6 text-slate-400" /><span className="font-medium text-slate-400">Profile</span>
               </Link>
             </nav>
           </div>
@@ -303,14 +236,34 @@ export default function RecyclerDetailsPage() {
       <CallModal
         open={showCallModal}
         onClose={() => setShowCallModal(false)}
-        recycler={recycler}
+        recycler={{ name: recycler.name, phone: recycler.phone }}
       />
 
       <ChatModal
         open={showChatModal}
         onClose={() => setShowChatModal(false)}
-        recycler={recycler}
+        recycler={{ name: recycler.name, chatNumber: recycler.chatNumber }}
       />
     </main>
+  );
+}
+
+function RecycleIcon() {
+  return (
+    <svg className="h-16 w-16 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  );
+}
+
+export default function RecyclerDetailsPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
+      </main>
+    }>
+      <RecyclerDetailsContent />
+    </Suspense>
   );
 }

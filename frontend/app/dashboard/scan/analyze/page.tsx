@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 export default function AnalyzingPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,11 +46,11 @@ export default function AnalyzingPage() {
                 </div>
 
                 <h1 className="text-[2rem] font-bold tracking-tight text-[#172033] sm:text-[2.4rem] lg:text-[2.8rem]">
-                  Analyzing Your Waste
+                  {t("scanner.analyzingYourWaste")}
                 </h1>
 
                 <p className="mt-4 max-w-xl text-base text-slate-600 sm:text-lg lg:text-xl">
-                  Our AI is identifying the waste type...
+                  {t("scanner.aiIsIdentifying")}
                 </p>
 
                 <div className="mt-10 flex items-center gap-2">

@@ -1,39 +1,42 @@
-import Image from 'next/image';
+'use client';
+
+import { ScanLine, Sparkles, DollarSign } from 'lucide-react';
+import { useLanguage } from "@/context/LanguageContext";
 
 export function HowItWorks() {
+  const { t } = useLanguage();
   const steps = [
-    { number: '1', title: 'Scan or upload waste', image: '/images/ScanIcon.png' },
-    { number: '2', title: 'Get instant analysis', image: '/images/Bolt.png' },
-    { number: '3', title: 'Recycle and earn', image: '/images/TrendUp.png' },
+    { num: 1, title: t("landing.step1"), icon: ScanLine },
+    { num: 2, title: t("landing.step2"), icon: Sparkles },
+    { num: 3, title: t("landing.step3"), icon: DollarSign },
   ];
 
   return (
-    <section id="how-it-works" className="px-5 py-10 sm:px-8">
-      <h2 className="text-center text-4xl font-bold tracking-[-0.03em] text-slate-900 sm:text-[2.5rem]">
-        How It Works
+    <section className="w-full max-w-6xl mx-auto px-6 mb-20 md:mb-28 relative">
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-900 mb-10 md:mb-16">
+        {t("landing.howItWorks")}
       </h2>
 
-      <div className="relative mx-auto mt-8 max-w-125 space-y-5">
-        <div className="absolute left-5.5 top-6 h-[calc(100%-48px)] w-0.5 bg-[#dfe8da]" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 relative pl-6 md:pl-0">
+        <div className="md:hidden absolute left-[2.4rem] top-4 bottom-4 w-px bg-gray-200 z-0"></div>
+        <div className="hidden md:block absolute top-[2.25rem] left-[10%] right-[10%] h-px bg-gray-200 z-0"></div>
 
-        {steps.map((step) => (
-          <div key={step.number} className="relative flex items-center gap-4">
-            <div className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#3f8a3b] text-lg font-bold text-white shadow-[0_10px_24px_rgba(63,138,59,0.24)]">
-              {step.number}
+        {steps.map((step, idx) => {
+          const Icon = step.icon;
+          return (
+            <div key={idx} className="relative z-10 flex md:flex-col items-center gap-4 md:gap-6 bg-white md:bg-transparent border border-gray-100 md:border-none rounded-2xl md:rounded-none p-3 md:p-0 shadow-sm md:shadow-none hover:shadow-md md:hover:shadow-none transition-shadow">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-[#549B45] text-white rounded-full flex items-center justify-center font-bold text-[13px] md:text-[15px] shrink-0 ml-[-1.5rem] md:ml-0 ring-4 ring-[#fcfdfc] z-10">
+                {step.num}
+              </div>
+              <div className="flex md:flex-col items-center md:text-center gap-4 w-full md:bg-white md:border md:border-gray-100 md:shadow-sm md:rounded-[2rem] md:p-8 md:hover:shadow-xl md:transition-all">
+                <div className="w-10 h-10 md:w-16 md:h-16 bg-[#f1f7ef] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 md:w-8 md:h-8 text-[#549B45]" />
+                </div>
+                <h4 className="font-bold text-[14px] md:text-lg text-gray-800">{step.title}</h4>
+              </div>
             </div>
-
-            <div className="flex min-h-21.5 flex-1 items-center gap-4 rounded-[22px] border border-[#eef1eb] bg-white px-5 shadow-[0_10px_26px_rgba(18,25,38,0.05)]">
-              <Image
-                src={step.image}
-                alt={step.title}
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
-              />
-              <p className="text-lg font-semibold text-slate-800">{step.title}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

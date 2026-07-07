@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Leaf,
   Menu,
   Phone,
   MessageCircle,
@@ -15,59 +15,57 @@ import {
 import CallModal from "@/components/recycler/CallModal";
 import ChatModal from "@/components/recycler/ChatModal";
 
-type RecyclerItem = {
-  id: number;
-  name: string;
-  distance: string;
-  phone: string;
-  chatNumber: string;
-};
-
-type ContactPayload = {
-  recycler: RecyclerItem;
-};
+import { recyclerApi } from "@/lib/api";
+import type { RecyclerData } from "@/lib/api";
 
 type DeliveryType = "Pickup" | "Drop off";
 
-export default function ContactRecyclerPage() {
-  const [data, setData] = useState<ContactPayload | null>(null);
+function ContactRecyclerContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const recyclerId = searchParams.get("recyclerId");
+
+  const [recycler, setRecycler] = useState<RecyclerData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("Pickup");
-  const [weight, setWeight] = useState("12.50");
+  const [weight, setWeight] = useState("1.00");
   const [details, setDetails] = useState("");
   const [showCallModal, setShowCallModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("selectedRecyclerContact");
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setData({
-        recycler: {
-          id: parsed.recycler?.id ?? 1,
-          name: parsed.recycler?.name ?? "GreenCycle Center",
-          distance: parsed.recycler?.distance ?? "0.8km away",
-          phone: parsed.recycler?.phone ?? "+234 802 123 4567",
-          chatNumber: parsed.recycler?.chatNumber ?? "+234 802 123 4567",
-        },
-      });
+    if (!recyclerId) {
+      setLoading(false);
       return;
     }
 
-    setData({
-      recycler: {
-        id: 1,
-        name: "GreenCycle Center",
-        distance: "0.8km away",
-        phone: "+234 802 123 4567",
-        chatNumber: "+234 802 123 4567",
-      },
-    });
-  }, []);
+    recyclerApi
+      .getById(recyclerId)
+      .then((data) => setRecycler(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [recyclerId]);
 
-  if (!data) return null;
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
+      </main>
+    );
+  }
 
-  const { recycler } = data;
+  if (!recycler) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea] px-4">
+        <div className="text-center">
+          <p className="text-slate-500">No recycler selected.</p>
+          <Link href="/dashboard/recyclers" className="mt-4 inline-block text-[#5d9d35] font-semibold">
+            ← Browse Recyclers
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#edf3ea]">
@@ -78,12 +76,12 @@ export default function ContactRecyclerPage() {
               <header className="flex items-center justify-between border-b border-black/5 bg-[#f3f4f6] px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6 lg:px-8">
                 <div className="flex items-center gap-2 font-semibold text-[#2f7d32]">
                   <div className="flex items-center gap-2">
-                  <img
-                    src="/images/logo.png"
+                    <img
+                      src="/images/logo.png"
                       alt="EcoSmart AI Logo"
                       className="h-10 w-auto object-contain"
-                  />
-                </div>
+                    />
+                  </div>
                 </div>
 
                 <button
@@ -155,6 +153,7 @@ export default function ContactRecyclerPage() {
                           <input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
                             className="mt-1 w-full bg-transparent text-[1.15rem] font-semibold text-[#111827] outline-none sm:text-[1.3rem]"
@@ -201,7 +200,7 @@ export default function ContactRecyclerPage() {
                     </button>
 
                     <Link
-                      href="/dashboard/recyclers/details"
+                      href={`/dashboard/recyclers/details?id=${recycler._id}`}
                       className="mt-4 block text-center text-[1rem] font-medium text-[#176c35]"
                     >
                       View Recycler Details
@@ -211,34 +210,19 @@ export default function ContactRecyclerPage() {
               </div>
 
               <nav className="grid grid-cols-4 border-t border-black/5 bg-[#f3f4f6] px-3 py-3 sm:px-5 lg:px-8">
-                <Link
-                  href="/dashboard"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <Home className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Home</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/scan"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/scan" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <ScanLine className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Scan</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/activity"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/activity" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <BarChart3 className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Activity</span>
                 </Link>
-
-                <Link
-                  href="/dashboard/profile"
-                  className="flex flex-col items-center gap-2 py-2 text-sm"
-                >
+                <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 py-2 text-sm">
                   <UserCircle2 className="h-6 w-6 text-slate-400" />
                   <span className="font-medium text-slate-400">Profile</span>
                 </Link>
@@ -250,15 +234,27 @@ export default function ContactRecyclerPage() {
         <CallModal
           open={showCallModal}
           onClose={() => setShowCallModal(false)}
-          recycler={recycler}
+          recycler={{ name: recycler.name, phone: recycler.phone }}
         />
 
         <ChatModal
           open={showChatModal}
           onClose={() => setShowChatModal(false)}
-          recycler={recycler}
+          recycler={{ name: recycler.name, chatNumber: recycler.chatNumber }}
         />
       </div>
     </main>
+  );
+}
+
+export default function ContactRecyclerPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
+        <p className="text-slate-500">Loading...</p>
+      </main>
+    }>
+      <ContactRecyclerContent />
+    </Suspense>
   );
 }

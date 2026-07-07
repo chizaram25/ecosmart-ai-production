@@ -1,20 +1,23 @@
 import type { Metadata } from 'next'
 import { Manrope, Poppins } from 'next/font/google'
 import { cn } from '../lib/utils'
+import { LanguageProvider } from '../context/LanguageContext'
 import './globals.css'
 
-// 1. Configure Manrope (Primary font)
+// 1. Configure Manrope (Primary font) with swap for instant first paint
 const manrope = Manrope({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-manrope',
+  display: 'swap',
 })
 
-// 2. Configure Poppins (Secondary/Accent font)
+// 2. Configure Poppins (Secondary/Accent font) with swap
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
   variable: '--font-poppins',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -36,7 +39,9 @@ export default function RootLayout({
           manrope.variable
         )}
       >
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   )
