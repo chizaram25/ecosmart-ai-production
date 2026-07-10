@@ -8,7 +8,6 @@ import {
   AlertCircle, Check, CheckCircle2
 } from 'lucide-react';
 import { authApi } from '@/lib/api';
-import { setToken, setUser } from '@/lib/auth';
 
 export default function IndividualSignUpPage() {
   const router = useRouter();
@@ -26,6 +25,7 @@ export default function IndividualSignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Touched State
   const [nameTouched, setNameTouched] = useState(false);
@@ -69,21 +69,18 @@ export default function IndividualSignUpPage() {
     if (!isFormValid || loading) return;
     
     setLoading(true);
+    setSubmitError('');
     
     try {
       // 🛑 STRICT ROLE ASSIGNMENT: Passed 'individual' to the API
-      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'individual');
+      const normalizedEmail = email.trim().toLowerCase();
+      const result = await authApi.register(name, normalizedEmail, password, phone.replace(/\D/g, ""), 'individual');
       
-      if (result && result.token) {
-        setToken(result.token);
-        if (result.user) setUser(result.user);
-        
-        // ✅ SAFE ROUTING: Only navigate on success
-        router.push('/dashboard');
+      if (result?.user) {
+        router.push(`/auth/individual/verify-email?email=${encodeURIComponent(normalizedEmail)}&purpose=signup`);
       }
-    } catch (e) { 
-      console.error(e); 
-      // Optionally add an error state here to show the user (e.g. "Email already in use")
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Unable to create account. Please try again.');
     } finally {
       // ✅ Reset loading state so the button becomes clickable again on failure
       setLoading(false);
@@ -164,6 +161,12 @@ export default function IndividualSignUpPage() {
           </div>
 
           <form className="w-full" onSubmit={handleSubmit}>
+            {submitError && (
+              <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{submitError}</p>
+              </div>
+            )}
 
             {/* Responsive Grid: 1 column mobile, 2 columns desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
@@ -233,9 +236,12 @@ export default function IndividualSignUpPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    title={showPassword ? "Hide password" : "Show password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
                 {fieldError?.field === 'password' && (
@@ -263,9 +269,12 @@ export default function IndividualSignUpPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    aria-pressed={showConfirmPassword}
+                    title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
                 {fieldError?.field === 'confirm' && (

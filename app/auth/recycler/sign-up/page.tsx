@@ -8,7 +8,6 @@ import {
   AlertCircle, Check, CheckCircle2
 } from 'lucide-react';
 import { authApi } from '@/lib/api';
-import { setToken, setUser } from '@/lib/auth';
 
 export default function RecyclerSignUpPage() {
   const router = useRouter();
@@ -26,6 +25,7 @@ export default function RecyclerSignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [loading, setLoading] = useState(false); // Added loading state
+  const [submitError, setSubmitError] = useState('');
 
   // Field Validation States
   const [isNameValid, setIsNameValid] = useState(false);
@@ -99,22 +99,19 @@ export default function RecyclerSignUpPage() {
     if (!isFormValid || loading) return;
     
     setLoading(true);
+    setSubmitError('');
     
     try {
       // 🛑 STRICT ROLE ASSIGNMENT: Passed 'recycler' to the API
       // Also ensuring phone is sent securely if required by your API structure
-      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'recycler');
+      const normalizedEmail = email.trim().toLowerCase();
+      const result = await authApi.register(name, normalizedEmail, password, phone.replace(/\D/g, ""), 'recycler');
       
-      if (result && result.token) {
-        setToken(result.token);
-        if (result.user) setUser(result.user);
-        
-        // ✅ SAFE ROUTING: Only navigate on success
-        router.push('/auth/recycler/build-profile');
+      if (result?.user) {
+        router.push(`/auth/recycler/verify-email?email=${encodeURIComponent(normalizedEmail)}&purpose=signup`);
       }
     } catch (err) {
-      console.error("Registration error:", err);
-      // Optionally handle specific errors here (like email already in use)
+      setSubmitError(err instanceof Error ? err.message : 'Unable to create account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -176,6 +173,12 @@ export default function RecyclerSignUpPage() {
           </div>
 
           <form className="w-full" onSubmit={handleSubmit}>
+            {submitError && (
+              <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{submitError}</p>
+              </div>
+            )}
 
             {/* Responsive Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -265,9 +268,12 @@ export default function RecyclerSignUpPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    title={showPassword ? "Hide password" : "Show password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
 
@@ -309,9 +315,12 @@ export default function RecyclerSignUpPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    aria-pressed={showConfirmPassword}
+                    title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
               </div>

@@ -27,6 +27,20 @@ const BASE_URL = getBaseUrl();
 
 console.log(`[API] Connecting to: ${BASE_URL}`);
 
+export class ApiError extends Error {
+  code?: string;
+  data?: unknown;
+  status: number;
+
+  constructor(message: string, status: number, code?: string, data?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.data = data;
+  }
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -62,7 +76,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const data = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.message || `Request failed (${res.status})`);
+    throw new ApiError(data.message || `Request failed (${res.status})`, res.status, data.code, data.data);
   }
 
   return data.data ?? data;
@@ -110,25 +124,25 @@ export interface DashboardData {
 export const authApi = {
   /** POST /api/auth/login — Sign in with email/phone + password */
   login: (email: string, password: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
+    request<{ token: string; user: { id: string; name: string; email: string; role: string; emailVerified: boolean } }>(
       '/auth/login',
       { method: 'POST', body: JSON.stringify({ email, password }) }
     ),
 
   /** POST /api/auth/register — Create a new account */
   register: (name: string, email: string, password: string, phone?: string, role?: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
+    request<{ user: { id: string; name: string; email: string; role: string; emailVerified: boolean } }>(
       '/auth/register',
       { method: 'POST', body: JSON.stringify({ name, email, password, phone, role }) }
     ),
 
   /** GET /api/auth/me — Get current logged-in user profile */
   getMe: () =>
-    request<{ id: string; name: string; email: string; createdAt: string }>('/auth/me'),
+    request<{ id: string; name: string; email: string; role: string; emailVerified: boolean; createdAt: string }>('/auth/me'),
 
   /** POST /api/auth/forgot-password — Request password reset email */
   forgotPassword: (email: string) =>
-    request<{ resetToken: string }>('/auth/forgot-password', {
+    request<{ email: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
@@ -146,17 +160,22 @@ export const authApi = {
 // ═══════════════════════════════════════════════════
 export const otpApi = {
   /** POST /api/otp/send — Send OTP to email or phone */
-  send: (method: 'email' | 'phone', identifier: string) =>
-    request<{ masked: string; devOtp?: string }>('/otp/send', {
+  send: (method: 'email' | 'phone', identifier: string, purpose: 'email-verification' | 'password-reset' = 'password-reset') =>
+    request<{ masked: string; devOtp?: string; alreadyVerified?: boolean }>('/otp/send', {
       method: 'POST',
-      body: JSON.stringify({ method, identifier }),
+      body: JSON.stringify({ method, identifier, purpose }),
     }),
 
   /** POST /api/otp/verify — Verify OTP code */
-  verify: (method: 'email' | 'phone', identifier: string, otp: string) =>
-    request<{ verified: boolean; resetToken?: string | null }>('/otp/verify', {
+  verify: (method: 'email' | 'phone', identifier: string, otp: string, purpose: 'email-verification' | 'password-reset' = 'password-reset') =>
+    request<{
+      verified: boolean;
+      resetToken?: string | null;
+      token?: string;
+      user?: { id: string; name: string; email: string; role: string; emailVerified: boolean };
+    }>('/otp/verify', {
       method: 'POST',
-      body: JSON.stringify({ method, identifier, otp }),
+      body: JSON.stringify({ method, identifier, otp, purpose }),
     }),
 };
 

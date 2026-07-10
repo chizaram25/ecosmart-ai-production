@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   Globe, Eye, EyeOff, AlertCircle, Recycle
 } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { ApiError, authApi, otpApi } from '@/lib/api';
 import { setToken, setUser } from '@/lib/auth';
 
 export default function RecyclerSignInPage() {
@@ -24,6 +24,7 @@ export default function RecyclerSignInPage() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   // Validation Effect
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function RecyclerSignInPage() {
 
     setLoading(true);
     setError('');
+    setUnverifiedEmail('');
 
     try {
       const result = await authApi.login(identifier, password);
@@ -60,6 +62,12 @@ export default function RecyclerSignInPage() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      if (err instanceof ApiError && err.code === 'email_not_verified') {
+        const data = err.data as { email?: string; role?: string } | undefined;
+        setUnverifiedEmail(data?.email || identifier.trim());
+        setError('Please verify your email before signing in.');
+        return;
+      }
 
       if (message.toLowerCase().includes('invalid email')) {
         setError('Invalid email');
@@ -68,6 +76,20 @@ export default function RecyclerSignInPage() {
       } else {
         setError(message || 'Invalid email or password');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setLoading(true);
+    setError('');
+    try {
+      await otpApi.send('email', unverifiedEmail, 'email-verification');
+      router.push(`/auth/recycler/verify-email?email=${encodeURIComponent(unverifiedEmail)}&purpose=signup`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend verification code.');
     } finally {
       setLoading(false);
     }
@@ -144,7 +166,14 @@ export default function RecyclerSignInPage() {
             {error && (
               <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <p className="text-[13px] md:text-sm text-red-600 font-medium">{error}</p>
+                <div className="flex-1">
+                  <p className="text-[13px] md:text-sm text-red-600 font-medium">{error}</p>
+                  {unverifiedEmail && (
+                    <button type="button" onClick={handleResendVerification} className="mt-2 text-[13px] font-bold text-[#1b5030] hover:underline">
+                      Send verification code
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -176,9 +205,12 @@ export default function RecyclerSignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  title={showPassword ? "Hide password" : "Show password"}
                   className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
               </div>
             </div>
