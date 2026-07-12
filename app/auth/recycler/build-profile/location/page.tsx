@@ -15,7 +15,7 @@ export default function ProfileLocationStep() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [coverageInput, setCoverageInput] = useState('');
-  const [coverageAreas, setCoverageAreas] = useState<string[]>(['Kubwa', 'Gwagwalada', 'Kuje']);
+  const [coverageAreas, setCoverageAreas] = useState<string[]>([]);
 
   // Availability State
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -127,6 +127,19 @@ export default function ProfileLocationStep() {
     setTouched(prev => ({ ...prev, days: true }));
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+    // Persist location using the backend's field names so the final save
+    // (in the pricing step) picks it up — previously this step navigated
+    // without saving, dropping the entire location payload.
+    localStorage.setItem(
+      "recycler_location",
+      JSON.stringify({ address, city, state, coverageAreas, selectedDays, openTime, closeTime, availableNow })
+    );
+    router.push('/auth/recycler/build-profile/categories');
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfdfc] font-sans text-gray-900 selection:bg-green-100 selection:text-green-900 flex flex-col relative pb-10 overflow-x-hidden">
 
@@ -197,7 +210,7 @@ export default function ProfileLocationStep() {
           </p>
         </div>
 
-        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={(e) => { e.preventDefault(); if (isFormValid) router.push('/auth/recycler/build-profile/categories'); }}>
+        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={handleSubmit}>
 
           {/* --- SECTION 1: YOUR LOCATION --- */}
           <div className="flex flex-col gap-6">

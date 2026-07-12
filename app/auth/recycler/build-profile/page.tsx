@@ -110,7 +110,18 @@ export default function BuildProfileStep1() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
-      localStorage.setItem("recycler_basic", JSON.stringify({ operationSize, primaryName, description, whatsapp }));
+      // Persist using the backend's field names (see recyclerProfileApi.save).
+      // `primaryName` is the local input; the backend expects `businessName`.
+      localStorage.setItem(
+        "recycler_basic",
+        JSON.stringify({
+          operationSize,
+          businessName: primaryName,
+          description,
+          whatsapp,
+          photoBase64: photoPreview || '',
+        })
+      );
       router.push('/auth/recycler/build-profile/location');
     }
   };

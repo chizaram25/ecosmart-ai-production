@@ -12,6 +12,7 @@ import { recyclerProfileApi } from '@/lib/api';
 export default function ProfilePricingStep() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Toggle State
   const [negotiateAll, setNegotiateAll] = useState(false);
@@ -41,13 +42,13 @@ export default function ProfilePricingStep() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFormValid, setIsFormValid] = useState(false);
 
-  // Material Data
+  // Material Data (min/max drive the per-material price-range validation)
   const materials = [
-    { id: 'glass', name: 'Glass Bottles', range: 'Range: ₦20 – ₦60/kg', icon: Wine, iconColor: 'text-amber-700', bg: 'bg-[#f8f5e6]' },
-    { id: 'plastic', name: 'Plastic Bottles', range: 'Range: ₦50 – ₦150/kg', icon: Cylinder, iconColor: 'text-pink-400', bg: 'bg-[#fdf4f6]' },
-    { id: 'metal', name: 'Metal Scraps', range: 'Range: ₦150 – ₦400/kg', icon: Cog, iconColor: 'text-gray-500', bg: 'bg-gray-100' },
-    { id: 'cables', name: 'Cables & Wires', range: 'Range: ₦200 – ₦600/kg', icon: Zap, iconColor: 'text-gray-800', bg: 'bg-gray-100' },
-    { id: 'food', name: 'Food Waste', range: 'Range: ₦10 – ₦30/kg', icon: Leaf, iconColor: 'text-[#549B45]', bg: 'bg-[#eaf4e7]' },
+    { id: 'glass', name: 'Glass Bottles', range: 'Range: ₦20 – ₦60/kg', min: 20, max: 60, icon: Wine, iconColor: 'text-amber-700', bg: 'bg-[#f8f5e6]' },
+    { id: 'plastic', name: 'Plastic Bottles', range: 'Range: ₦50 – ₦150/kg', min: 50, max: 150, icon: Cylinder, iconColor: 'text-pink-400', bg: 'bg-[#fdf4f6]' },
+    { id: 'metal', name: 'Metal Scraps', range: 'Range: ₦150 – ₦400/kg', min: 150, max: 400, icon: Cog, iconColor: 'text-gray-500', bg: 'bg-gray-100' },
+    { id: 'cables', name: 'Cables & Wires', range: 'Range: ₦200 – ₦600/kg', min: 200, max: 600, icon: Zap, iconColor: 'text-gray-800', bg: 'bg-gray-100' },
+    { id: 'food', name: 'Food Waste', range: 'Range: ₦10 – ₦30/kg', min: 10, max: 30, icon: Leaf, iconColor: 'text-[#549B45]', bg: 'bg-[#eaf4e7]' },
   ];
 
   // Validation Effect
@@ -71,16 +72,33 @@ export default function ProfilePricingStep() {
       }
     };
 
-    Object.keys(prices).forEach(key => {
-      validateNumber(prices[key], `price_${key}`, 'Must be a valid positive number');
-    });
+    // Per-material price must fall within the allowed range (blank = negotiable).
+    // Skipped entirely when the recycler opts to negotiate all prices.
+    if (!negotiateAll) {
+      materials.forEach((mat) => {
+        const val = prices[mat.id];
+        if (val.trim() === '') return;
+        const num = Number(val);
+        const fieldId = `price_${mat.id}`;
+        if (isNaN(num) || num < 0) {
+          if (touched[fieldId]) newErrors[fieldId] = 'Enter a valid amount';
+          isValid = false;
+        } else if (num < mat.min) {
+          if (touched[fieldId]) newErrors[fieldId] = `Min ₦${mat.min}`;
+          isValid = false;
+        } else if (num > mat.max) {
+          if (touched[fieldId]) newErrors[fieldId] = `Max ₦${mat.max}`;
+          isValid = false;
+        }
+      });
+    }
 
     validateNumber(minPickupValue, 'minPickup', 'Must be a valid number');
     validateNumber(minCollectionQty, 'minQty', 'Must be a valid number');
 
     setErrors(newErrors);
     setIsFormValid(isValid);
-  }, [prices, paymentMethods, minPickupValue, minCollectionQty, touched]);
+  }, [prices, paymentMethods, minPickupValue, minCollectionQty, touched, negotiateAll]);
 
   // Handlers
   const handlePriceChange = (id: string, value: string) => {
@@ -108,6 +126,7 @@ export default function ProfilePricingStep() {
     }
 
     setSaving(true);
+    setSaveError('');
 
     // Collect data from localStorage (saved from steps 1-3) and current form
     const basicData = JSON.parse(localStorage.getItem('recycler_basic') || '{}');
@@ -126,16 +145,16 @@ export default function ProfilePricingStep() {
         minCollectionQty,
       });
 
-      // Clear saved data
+      // Clear the draft only after a confirmed save
       localStorage.removeItem('recycler_basic');
       localStorage.removeItem('recycler_location');
       localStorage.removeItem('recycler_categories');
 
       router.push('/auth/recycler/build-profile/success');
     } catch (err) {
-      console.error('Failed to save profile:', err);
-      // Still navigate to success even if save fails (hackathon)
-      router.push('/auth/recycler/build-profile/success');
+      // Surface the failure instead of showing a false "Profile Ready!" screen.
+      setSaveError(err instanceof Error ? err.message : 'Could not save your profile. Please try again.');
+      setSaving(false);
     }
   };
 
@@ -228,6 +247,14 @@ export default function ProfilePricingStep() {
             {materials.map((mat) => {
               const Icon = mat.icon;
               const error = errors[`price_${mat.id}`];
+              const rawPrice = prices[mat.id];
+              const numPrice = Number(rawPrice);
+              const isValidPrice =
+                !negotiateAll &&
+                rawPrice.trim() !== '' &&
+                !isNaN(numPrice) &&
+                numPrice >= mat.min &&
+                numPrice <= mat.max;
               return (
                 <div key={mat.id} className={`flex items-center justify-between p-4 border rounded-2xl bg-white shadow-sm transition-colors ${error ? 'border-red-400 bg-red-50/20' : 'border-gray-100 focus-within:border-[#549B45]'}`}>
                   <div className="flex items-center gap-4">
@@ -249,8 +276,9 @@ export default function ProfilePricingStep() {
                         name={`price_${mat.id}`}
                         className="w-12 md:w-16 border-b border-gray-200 text-center outline-none text-[15px] md:text-[16px] font-semibold text-gray-900 focus:border-[#549B45] transition-colors disabled:opacity-50" />
                       <span className="text-[12px] md:text-[13px] text-gray-400">/kg</span>
+                      {isValidPrice && <Check className="w-4 h-4 text-[#549B45] shrink-0" strokeWidth={3} />}
                     </div>
-                    {error && <span className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Invalid</span>}
+                    {error && <span className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {error}</span>}
                   </div>
                 </div>
               );
@@ -323,6 +351,13 @@ export default function ProfilePricingStep() {
               </div>
             )}
           </div>
+
+          {saveError && (
+            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="text-[13px] md:text-sm text-red-600 font-medium">{saveError}</p>
+            </div>
+          )}
 
           <button type="submit" disabled={!isFormValid || saving}
             className={`w-full py-4 rounded-full font-bold text-[15px] md:text-[16px] flex items-center justify-center gap-2 transition-all duration-300 mt-2 ${

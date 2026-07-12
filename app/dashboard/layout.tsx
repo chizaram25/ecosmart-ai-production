@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import FloatingAssistant from "@/components/ai assistant/FloatingAssistant";
+import RecyclerProfileGate from "@/components/dashboard/RecyclerProfileGate";
 
 export default function DashboardLayout({
   children,
@@ -9,7 +10,7 @@ export default function DashboardLayout({
   return (
     <main className="min-h-screen bg-[#edf3ea]">
       <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8">
-        {children}
+        <RecyclerProfileGate>{children}</RecyclerProfileGate>
       </div>
 
       <FloatingAssistant />

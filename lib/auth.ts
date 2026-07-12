@@ -44,6 +44,8 @@ export interface StoredUser {
   id: string;
   name: string;
   email: string;
+  role?: string;
+  emailVerified?: boolean;
 }
 
 export function getUser(): StoredUser | null {

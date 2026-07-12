@@ -14,8 +14,8 @@ export default function ProfileCategoriesStep() {
   const router = useRouter();
 
   // Form State
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(['Cardboard', 'Aluminium', 'Textiles', 'Organic Waste', 'Wood']);
-  const [selectedMethods, setSelectedMethods] = useState<string[]>(['Home Pickup', 'Drop-off at My Location']);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [sameDayPickup, setSameDayPickup] = useState(false);
   const [scheduledBookings, setScheduledBookings] = useState(true);
   const [minQuantity, setMinQuantity] = useState('');
