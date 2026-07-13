@@ -68,13 +68,6 @@ export default function SignInPage() {
       }
 
       const message = err instanceof Error ? err.message : 'Login failed';
-      if (err instanceof ApiError && err.code === 'email_not_verified') {
-        const data = err.data as { email?: string; role?: string } | undefined;
-        setUnverifiedEmail(data?.email || identifier.trim());
-        setError('Please verify your email before signing in.');
-        return;
-      }
-
       if (message.toLowerCase().includes('invalid email')) {
         setError('Invalid email');
       } else if (message.toLowerCase().includes('phone')) {
