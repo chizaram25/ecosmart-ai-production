@@ -10,14 +10,11 @@ import { useRouter } from 'next/navigation';
 
 export default function ProfileLocationStep() {
   const router = useRouter();
-  
   // Form State
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [coverageInput, setCoverageInput] = useState('');
-  
-  // FIX: Cleared out the dummy coverage areas so it starts blank
   const [coverageAreas, setCoverageAreas] = useState<string[]>([]);
 
   // Availability State
@@ -49,6 +46,23 @@ export default function ProfileLocationStep() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Rehydrate from the saved draft so going back to this step repopulates it.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("recycler_location") || "{}");
+      if (saved.address) setAddress(saved.address);
+      if (saved.city) setCity(saved.city);
+      if (saved.state) setState(saved.state);
+      if (Array.isArray(saved.coverageAreas)) setCoverageAreas(saved.coverageAreas);
+      if (Array.isArray(saved.selectedDays)) setSelectedDays(saved.selectedDays);
+      if (saved.openTime) setOpenTime(saved.openTime);
+      if (saved.closeTime) setCloseTime(saved.closeTime);
+      if (typeof saved.availableNow === "boolean") setAvailableNow(saved.availableNow);
+    } catch {
+      /* ignore malformed draft */
+    }
+  }, []);
 
   // Validation Effect
   useEffect(() => {
@@ -130,9 +144,23 @@ export default function ProfileLocationStep() {
     setTouched(prev => ({ ...prev, days: true }));
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+    // Persist location using the backend's field names so the final save
+    // (in the pricing step) picks it up — previously this step navigated
+    // without saving, dropping the entire location payload.
+    localStorage.setItem(
+      "recycler_location",
+      JSON.stringify({ address, city, state, coverageAreas, selectedDays, openTime, closeTime, availableNow })
+    );
+    router.push('/auth/recycler/build-profile/categories');
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfdfc] font-sans text-gray-900 selection:bg-green-100 selection:text-green-900 flex flex-col relative pb-10 overflow-x-hidden">
 
+      {/* Edge-to-Edge Decorative Top Wave */}
       <div className="absolute top-0 left-0 w-full h-56 md:h-72 lg:h-80 bg-[#f6fcf4] z-0">
          <svg
            viewBox="0 0 1200 120"
@@ -144,6 +172,7 @@ export default function ProfileLocationStep() {
          </svg>
       </div>
 
+      {/* Header */}
       <header className="relative z-20 w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 pt-6 pb-4">
         <div className="flex items-center gap-1.5 cursor-pointer">
           <div className="bg-green-50 p-1.5 rounded-full">
@@ -160,8 +189,10 @@ export default function ProfileLocationStep() {
         </button>
       </header>
 
+      {/* Main Form Area */}
       <main className="relative z-10 flex-grow w-full max-w-4xl mx-auto px-6 md:px-12 pt-4 md:pt-8 flex flex-col">
 
+        {/* Progress Navigation */}
         <div className="w-full mb-8">
           <div className="flex justify-between items-center mb-4">
             <Link href="/auth/recycler/build-profile" className="flex items-center gap-1.5 text-[#1b5030] hover:text-[#549B45] font-semibold text-[14px] md:text-[15px] transition-colors cursor-pointer">
@@ -173,6 +204,7 @@ export default function ProfileLocationStep() {
             </div>
           </div>
 
+          {/* Progress Bars (Step 2 of 4) */}
           <div className="flex gap-2 w-full mb-2">
             <div className="h-1.5 flex-1 bg-[#549B45] rounded-full"></div>
             <div className="h-1.5 flex-1 bg-[#549B45] rounded-full"></div>
@@ -185,6 +217,7 @@ export default function ProfileLocationStep() {
           </div>
         </div>
 
+        {/* Title */}
         <div className="mb-8 md:mb-10">
           <h1 className="text-[28px] md:text-4xl lg:text-[40px] leading-tight font-extrabold text-[#111827] mb-2 md:mb-3">
             Where Do You Operate?
@@ -194,11 +227,13 @@ export default function ProfileLocationStep() {
           </p>
         </div>
 
-        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={(e) => { e.preventDefault(); if (isFormValid) router.push('/auth/recycler/build-profile/categories'); }}>
+        <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={handleSubmit}>
 
+          {/* --- SECTION 1: YOUR LOCATION --- */}
           <div className="flex flex-col gap-6">
             <h2 className="font-bold text-[16px] md:text-lg text-gray-900">Your Location</h2>
 
+            {/* Pickup Address */}
             <div>
               <label className="block text-[13px] md:text-[14px] font-medium text-gray-700 mb-2">Pickup Address</label>
               <div className={`relative flex items-center border rounded-[1rem] md:rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${errors.address ? 'border-red-400 focus-within:border-red-500' : 'border-gray-200 focus-within:border-[#549B45]'}`}>
@@ -221,20 +256,19 @@ export default function ProfileLocationStep() {
               )}
             </div>
 
-            {/* FIX: Active Google Map Embed updates as user types address/city/state */}
-            <div className="relative w-full h-[140px] md:h-[180px] bg-gray-100 rounded-[1rem] md:rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <iframe
-                title="Location Map"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                  `${address ? address + ', ' : ''}${city ? city + ', ' : ''}${state ? state + ', ' : ''}Nigeria`
-                )}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
-                className="w-full h-full border-0"
-                loading="lazy"
-                allowFullScreen
-              />
+            {/* Map Placeholder Box */}
+            <div className="relative w-full h-[140px] md:h-[180px] bg-gradient-to-br from-[#e3eedc] to-[#f1f7ef] rounded-[1rem] md:rounded-2xl border border-[#549B45]/20 flex flex-col items-center justify-center cursor-pointer group hover:shadow-md transition-shadow">
+              <MapPin className="w-8 h-8 text-[#549B45] mb-2 group-hover:scale-110 transition-transform duration-300" />
+              <span className="text-[13px] md:text-[14px] font-medium text-[#1b5030]">Tap to pick location on map</span>
+
+              <button type="button" className="absolute bottom-3 right-3 bg-white text-[#1b5030] border border-gray-200 shadow-sm rounded-full px-3 py-1.5 text-[11px] md:text-xs font-bold flex items-center gap-1.5 hover:bg-gray-50 transition-colors">
+                <MapPin className="w-3.5 h-3.5" /> Use GPS
+              </button>
             </div>
 
+            {/* City and State Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* City */}
               <div>
                 <label className="block text-[13px] md:text-[14px] font-medium text-gray-700 mb-2">City</label>
                 <div className={`relative flex items-center border rounded-[1rem] md:rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${errors.city ? 'border-red-400 focus-within:border-red-500' : 'border-gray-200 focus-within:border-[#549B45]'}`}>
@@ -257,6 +291,7 @@ export default function ProfileLocationStep() {
                 )}
               </div>
 
+              {/* State */}
               <div>
                 <label className="block text-[13px] md:text-[14px] font-medium text-gray-700 mb-2">State <span className="text-red-500">*</span></label>
                 <div className={`relative flex items-center border rounded-[1rem] md:rounded-2xl bg-white transition-colors shadow-sm ${errors.state ? 'border-red-400 focus-within:border-red-500' : 'border-gray-200 focus-within:border-[#549B45]'}`}>
@@ -286,6 +321,7 @@ export default function ProfileLocationStep() {
               </div>
             </div>
 
+            {/* Coverage Areas */}
             <div>
               <label className="block text-[13px] md:text-[14px] font-medium text-gray-700 mb-2">Coverage Areas</label>
               <div className="flex gap-2 mb-3">
@@ -313,6 +349,7 @@ export default function ProfileLocationStep() {
                 </button>
               </div>
 
+              {/* Area Chips */}
               <div className="flex flex-wrap gap-2 mb-2">
                 {coverageAreas.map(area => (
                   <div key={area} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-[12px] md:text-[13px] font-medium flex items-center gap-1.5 animate-in zoom-in">
@@ -336,11 +373,13 @@ export default function ProfileLocationStep() {
             </div>
           </div>
 
+          {/* --- SECTION 2: YOUR AVAILABILITY --- */}
           <div className="flex flex-col gap-6">
             <h2 className="font-bold text-[16px] md:text-lg text-gray-900">Your Availability</h2>
 
             <div className="bg-white border border-gray-100 rounded-3xl p-5 md:p-8 shadow-sm">
 
+              {/* Day Selector */}
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2 md:gap-3 mb-3">
                   {daysOfWeek.map(day => {
@@ -373,6 +412,7 @@ export default function ProfileLocationStep() {
                 </div>
               </div>
 
+              {/* Time Inputs */}
               <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 md:gap-6 mb-8">
                 <div className="w-full">
                   <label className="block text-[12px] md:text-[13px] font-medium text-gray-500 mb-1.5">Opens</label>
@@ -413,6 +453,7 @@ export default function ProfileLocationStep() {
                  </p>
               )}
 
+              {/* Available Now Toggle */}
               <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-4">
                 <span className="font-bold text-[14px] md:text-[15px] text-gray-900">Available for pickups now</span>
                 <button
@@ -432,6 +473,7 @@ export default function ProfileLocationStep() {
             </div>
           </div>
 
+          {/* Ask Mina Prompt */}
           <div className="flex items-center gap-4 bg-[#fcfdfc] md:bg-white rounded-full">
             <div className="w-10 h-10 bg-[#eaf4e7] rounded-full flex items-center justify-center relative shadow-sm shrink-0">
                <Bot className="w-6 h-6 text-[#549B45]" />
@@ -444,6 +486,7 @@ export default function ProfileLocationStep() {
             </div>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={!isFormValid}
@@ -458,6 +501,7 @@ export default function ProfileLocationStep() {
 
         </form>
 
+        {/* Footer Navigation Tabs */}
         <div className="flex justify-center gap-4 md:gap-8 mt-12 text-[12px] md:text-[14px]">
           <Link href="/auth/recycler/build-profile" className="font-semibold text-[#549B45] hover:text-gray-900">Basic Info</Link>
           <span className="font-bold text-gray-900">Location</span>

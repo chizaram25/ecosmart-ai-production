@@ -4,42 +4,25 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Globe, ChevronLeft, Check, Leaf, AlertCircle, ArrowRight, Bot,
-  Wine, Cylinder, Cog, Zap, ChevronDown, ChevronUp, CheckCircle2,
-  Milk, FileText, Package, Laptop, Battery, Shirt, Disc, TreePine
+  Globe, ChevronLeft, Check, Leaf, AlertCircle,
+  ChevronDown, ChevronUp, CheckCircle2
 } from 'lucide-react';
 import { recyclerProfileApi } from '@/lib/api';
-
-// Map icon strings back to actual Lucide components and colors
-const iconMap: Record<string, { icon: any, color: string, bg: string }> = {
-  'Glass': { icon: Wine, color: 'text-amber-700', bg: 'bg-[#f8f5e6]' },
-  'Plastic': { icon: Milk, color: 'text-pink-400', bg: 'bg-[#fdf4f6]' },
-  'Metal': { icon: Cog, color: 'text-gray-500', bg: 'bg-gray-100' },
-  'Cables': { icon: Zap, color: 'text-gray-800', bg: 'bg-gray-100' },
-  'Organic Waste': { icon: Leaf, color: 'text-[#549B45]', bg: 'bg-[#eaf4e7]' },
-  'Paper': { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50' },
-  'Cardboard': { icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
-  'Aluminium': { icon: Cylinder, color: 'text-slate-500', bg: 'bg-slate-100' },
-  'Steel': { icon: Cog, color: 'text-slate-800', bg: 'bg-slate-200' },
-  'Electronics': { icon: Laptop, color: 'text-purple-500', bg: 'bg-purple-50' },
-  'Batteries': { icon: Battery, color: 'text-red-500', bg: 'bg-red-50' },
-  'Textiles': { icon: Shirt, color: 'text-teal-500', bg: 'bg-teal-50' },
-  'Rubber': { icon: Disc, color: 'text-gray-700', bg: 'bg-gray-200' },
-  'Wood': { icon: TreePine, color: 'text-green-800', bg: 'bg-green-100' },
-};
+import { RECYCLER_MATERIALS, type RecyclerMaterial } from '../materials';
 
 export default function ProfilePricingStep() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [saveError, setSaveError] = useState('');
+  const [hydrated, setHydrated] = useState(false);
 
   // Toggle State
   const [negotiateAll, setNegotiateAll] = useState(false);
 
-  // Dynamic Materials State based on previous page selection
-  const [activeMaterials, setActiveMaterials] = useState<string[]>([]);
+  // Materials to price = whatever was selected in Step 3.
+  const [pricedMaterials, setPricedMaterials] = useState<RecyclerMaterial[]>([]);
 
-  // Pricing State
+  // Price per material id (₦/kg). Blank = negotiable.
   const [prices, setPrices] = useState<Record<string, string>>({});
 
   // Payment Methods
@@ -58,25 +41,41 @@ export default function ProfilePricingStep() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFormValid, setIsFormValid] = useState(false);
 
-  // Load selected materials from Step 3 when page loads
+  // Load the materials selected in Step 3, and restore this step's own draft
+  // so navigating back and forth keeps the pricing input.
   useEffect(() => {
+    let selected: string[] = [];
     try {
-      const categoriesData = JSON.parse(localStorage.getItem('recycler_categories') || '{}');
-      if (categoriesData && categoriesData.selectedMaterials) {
-        setActiveMaterials(categoriesData.selectedMaterials);
-        
-        // Initialize price state objects for only the selected materials
-        const initialPrices: Record<string, string> = {};
-        categoriesData.selectedMaterials.forEach((mat: string) => {
-          initialPrices[mat] = '';
-        });
-        setPrices(initialPrices);
-      }
-    } catch (e) {
-      console.error("Failed to load materials", e);
+      const cats = JSON.parse(localStorage.getItem('recycler_categories') || '{}');
+      if (Array.isArray(cats.selectedMaterials)) selected = cats.selectedMaterials;
+    } catch {
+      /* ignore malformed draft */
     }
-    setLoadingInitial(false);
+    setPricedMaterials(RECYCLER_MATERIALS.filter((m) => selected.includes(m.id)));
+
+    try {
+      const saved = JSON.parse(localStorage.getItem('recycler_pricing') || '{}');
+      if (typeof saved.negotiateAll === 'boolean') setNegotiateAll(saved.negotiateAll);
+      if (saved.prices && typeof saved.prices === 'object') setPrices(saved.prices);
+      if (Array.isArray(saved.paymentMethods)) setPaymentMethods(saved.paymentMethods);
+      if (saved.minPickupValue) setMinPickupValue(saved.minPickupValue);
+      if (saved.minCollectionQty) setMinCollectionQty(saved.minCollectionQty);
+    } catch {
+      /* ignore malformed draft */
+    }
+
+    setHydrated(true);
   }, []);
+
+  // Autosave this step's draft — guarded on `hydrated` so the initial empty
+  // state never clobbers a restored draft.
+  useEffect(() => {
+    if (!hydrated) return;
+    localStorage.setItem(
+      'recycler_pricing',
+      JSON.stringify({ negotiateAll, prices, paymentMethods, minPickupValue, minCollectionQty })
+    );
+  }, [hydrated, negotiateAll, prices, paymentMethods, minPickupValue, minCollectionQty]);
 
   // Validation Effect
   useEffect(() => {
@@ -99,15 +98,24 @@ export default function ProfilePricingStep() {
       }
     };
 
-    // Only validate prices if they are NOT negotiating all
+    // Per-material price must fall within the allowed range (blank = negotiable).
+    // Skipped entirely when the recycler opts to negotiate all prices.
     if (!negotiateAll) {
-      Object.keys(prices).forEach(key => {
-        validateNumber(prices[key], `price_${key}`, 'Must be a valid positive number');
-      });
-    } else {
-      // If negotiating all, we clear any previous price errors!
-      Object.keys(prices).forEach(key => {
-        delete newErrors[`price_${key}`];
+      pricedMaterials.forEach((mat) => {
+        const val = prices[mat.id] ?? '';
+        if (val.trim() === '') return;
+        const num = Number(val);
+        const fieldId = `price_${mat.id}`;
+        if (isNaN(num) || num < 0) {
+          if (touched[fieldId]) newErrors[fieldId] = 'Enter a valid amount';
+          isValid = false;
+        } else if (num < mat.min) {
+          if (touched[fieldId]) newErrors[fieldId] = `Min ₦${mat.min}`;
+          isValid = false;
+        } else if (num > mat.max) {
+          if (touched[fieldId]) newErrors[fieldId] = `Max ₦${mat.max}`;
+          isValid = false;
+        }
       });
     }
 
@@ -116,7 +124,7 @@ export default function ProfilePricingStep() {
 
     setErrors(newErrors);
     setIsFormValid(isValid);
-  }, [prices, paymentMethods, minPickupValue, minCollectionQty, touched, negotiateAll]);
+  }, [prices, paymentMethods, minPickupValue, minCollectionQty, touched, negotiateAll, pricedMaterials]);
 
   // Handlers
   const handlePriceChange = (id: string, value: string) => {
@@ -138,19 +146,18 @@ export default function ProfilePricingStep() {
     e.preventDefault();
     if (!isFormValid) {
       const allTouched: Record<string, boolean> = { payment: true, minPickup: true, minQty: true };
-      Object.keys(prices).forEach(k => allTouched[`price_${k}`] = true);
+      pricedMaterials.forEach((m) => (allTouched[`price_${m.id}`] = true));
       setTouched(allTouched);
       return;
     }
 
     setSaving(true);
+    setSaveError('');
 
+    // Collect data from localStorage (saved from steps 1-3) and current form
     const basicData = JSON.parse(localStorage.getItem('recycler_basic') || '{}');
     const locationData = JSON.parse(localStorage.getItem('recycler_location') || '{}');
     const categoriesData = JSON.parse(localStorage.getItem('recycler_categories') || '{}');
-
-    // If negotiating all, send empty prices so the backend knows
-    const finalPrices = negotiateAll ? {} : prices;
 
     try {
       await recyclerProfileApi.save({
@@ -158,27 +165,25 @@ export default function ProfilePricingStep() {
         ...locationData,
         ...categoriesData,
         negotiateAll,
-        prices: finalPrices,
+        prices,
         paymentMethods,
         minPickupValue,
         minCollectionQty,
       });
 
+      // Clear the draft only after a confirmed save
       localStorage.removeItem('recycler_basic');
       localStorage.removeItem('recycler_location');
       localStorage.removeItem('recycler_categories');
+      localStorage.removeItem('recycler_pricing');
 
       router.push('/auth/recycler/build-profile/success');
     } catch (err) {
-      console.error('Failed to save profile:', err);
-      // Still navigate to success even if save fails (hackathon safety net)
-      router.push('/auth/recycler/build-profile/success');
+      // Surface the failure instead of showing a false "Profile Ready!" screen.
+      setSaveError(err instanceof Error ? err.message : 'Could not save your profile. Please try again.');
+      setSaving(false);
     }
   };
-
-  if (loadingInitial) {
-    return <div className="min-h-screen bg-[#fcfdfc] flex items-center justify-center">Loading...</div>;
-  }
 
   return (
     <div className="min-h-screen bg-[#fcfdfc] font-sans text-gray-900 selection:bg-green-100 selection:text-green-900 flex flex-col relative pb-10 overflow-x-hidden">
@@ -207,6 +212,7 @@ export default function ProfilePricingStep() {
 
       <main className="relative z-10 flex-grow w-full max-w-5xl mx-auto px-6 md:px-12 pt-4 md:pt-8 flex flex-col">
 
+        {/* Progress Navigation */}
         <div className="w-full mb-8">
           <div className="flex justify-between items-center mb-4">
             <Link href="/auth/recycler/build-profile/categories" className="flex items-center gap-1.5 text-[#1b5030] hover:text-[#549B45] font-semibold text-[14px] md:text-[15px] transition-colors cursor-pointer">
@@ -230,6 +236,7 @@ export default function ProfilePricingStep() {
           </div>
         </div>
 
+        {/* Title */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-[28px] md:text-4xl lg:text-[40px] leading-tight font-extrabold text-[#111827] mb-2 md:mb-3">
             Set Your Pricing.
@@ -263,46 +270,58 @@ export default function ProfilePricingStep() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeMaterials.length === 0 ? (
-              <div className="col-span-2 text-center p-8 bg-gray-50 rounded-2xl text-gray-500 border border-dashed border-gray-200">
-                You didn't select any materials on the previous page. Go back to add materials!
-              </div>
-            ) : (
-              activeMaterials.map((matKey) => {
-                const matConfig = iconMap[matKey] || { icon: Leaf, color: 'text-gray-500', bg: 'bg-gray-100' };
-                const Icon = matConfig.icon;
-                const error = errors[`price_${matKey}`];
-                
+          {/* Prices — one row per material selected in Step 3 */}
+          {pricedMaterials.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-8 text-center">
+              <p className="text-[14px] text-gray-600 font-medium">You haven&apos;t selected any materials yet.</p>
+              <Link href="/auth/recycler/build-profile/categories" className="mt-2 inline-block text-[13px] font-bold text-[#549B45] hover:underline">
+                ← Choose what you collect
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pricedMaterials.map((mat) => {
+                const Icon = mat.icon;
+                const error = errors[`price_${mat.id}`];
+                const rawPrice = prices[mat.id] ?? '';
+                const numPrice = Number(rawPrice);
+                const isValidPrice =
+                  !negotiateAll &&
+                  rawPrice.trim() !== '' &&
+                  !isNaN(numPrice) &&
+                  numPrice >= mat.min &&
+                  numPrice <= mat.max;
                 return (
-                  <div key={matKey} className={`flex items-center justify-between p-4 border rounded-2xl bg-white shadow-sm transition-colors ${error ? 'border-red-400 bg-red-50/20' : 'border-gray-100 focus-within:border-[#549B45]'}`}>
+                  <div key={mat.id} className={`flex items-center justify-between p-4 border rounded-2xl bg-white shadow-sm transition-colors ${error ? 'border-red-400 bg-red-50/20' : 'border-gray-100 focus-within:border-[#549B45]'}`}>
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 md:w-12 md:h-12 ${matConfig.bg} rounded-full flex items-center justify-center shrink-0`}>
-                        <Icon className={`w-5 h-5 md:w-6 md:h-6 ${matConfig.color}`} />
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-[#eef5ea] rounded-full flex items-center justify-center shrink-0">
+                        <Icon className="w-5 h-5 md:w-6 md:h-6 text-[#549B45]" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-[14px] md:text-[15px] text-gray-900">{matKey}</h4>
+                        <h4 className="font-bold text-[14px] md:text-[15px] text-gray-900">{mat.name}</h4>
+                        <p className="text-[11px] md:text-[12px] text-gray-500">Range: ₦{mat.min} – ₦{mat.max}/kg</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-[#549B45] text-[15px] md:text-[16px]">₦</span>
-                        <input type="text" value={prices[matKey] || ''}
-                          onChange={(e) => handlePriceChange(matKey, e.target.value)}
-                          onBlur={() => handleBlur(`price_${matKey}`)}
+                        <input type="text" value={rawPrice}
+                          onChange={(e) => handlePriceChange(mat.id, e.target.value)}
+                          onBlur={() => handleBlur(`price_${mat.id}`)}
                           placeholder="0" disabled={negotiateAll}
-                          name={`price_${matKey}`}
+                          name={`price_${mat.id}`}
                           className="w-12 md:w-16 border-b border-gray-200 text-center outline-none text-[15px] md:text-[16px] font-semibold text-gray-900 focus:border-[#549B45] transition-colors disabled:opacity-50" />
                         <span className="text-[12px] md:text-[13px] text-gray-400">/kg</span>
+                        {isValidPrice && <Check className="w-4 h-4 text-[#549B45] shrink-0" strokeWidth={3} />}
                       </div>
-                      {error && <span className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Invalid</span>}
+                      {error && <span className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {error}</span>}
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
-          <p className="text-[12px] md:text-[13px] text-gray-500 mt-4 text-center">Leave a price blank and it will show as "negotiable" to customers.</p>
+              })}
+            </div>
+          )}
+          <p className="text-[12px] md:text-[13px] text-gray-500 mt-4 text-center">Leave a price blank and it will show as &quot;negotiable&quot; to customers.</p>
 
           <div className={`bg-white border rounded-3xl p-5 md:p-8 shadow-sm transition-colors ${errors.payment ? 'border-red-300' : 'border-gray-100'}`}>
             <h3 className="font-bold text-[15px] md:text-[16px] text-gray-900 mb-4">Payment Methods Accepted</h3>
@@ -356,19 +375,37 @@ export default function ProfilePricingStep() {
             </button>
             {marketRatesOpen && (
               <div className="mt-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <Cog className="w-4 h-4 text-gray-500" />
-                    <span className="font-semibold text-[13px] md:text-[14px] text-gray-800">Metal Scraps</span>
+                {pricedMaterials.length === 0 ? (
+                  <p className="text-[12px] text-gray-400 mb-4">Select materials to see their typical rates.</p>
+                ) : (
+                  <div className="flex flex-col gap-3 mb-4">
+                    {pricedMaterials.map((mat) => {
+                      const Icon = mat.icon;
+                      return (
+                        <div key={mat.id} className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-gray-500" />
+                            <span className="font-semibold text-[13px] md:text-[14px] text-gray-800">{mat.name}</span>
+                          </div>
+                          <span className="font-bold text-[#549B45] text-[13px] md:text-[14px]">₦{mat.min} – ₦{mat.max}/kg</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <span className="font-bold text-[#549B45] text-[13px] md:text-[14px]">₦200 – ₦300/kg</span>
-                </div>
+                )}
                 <p className="text-[11px] md:text-[12px] text-gray-400 leading-snug">
                   Rates are updated periodically by EcoSmart AI to reflect current market conditions.
                 </p>
               </div>
             )}
           </div>
+
+          {saveError && (
+            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="text-[13px] md:text-sm text-red-600 font-medium">{saveError}</p>
+            </div>
+          )}
 
           <button type="submit" disabled={!isFormValid || saving}
             className={`w-full py-4 rounded-full font-bold text-[15px] md:text-[16px] flex items-center justify-center gap-2 transition-all duration-300 mt-2 ${

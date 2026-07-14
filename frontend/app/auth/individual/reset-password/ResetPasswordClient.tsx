@@ -6,14 +6,12 @@ import Link from 'next/link';
 import { Globe, ArrowLeft, Lock, Eye, EyeOff, CheckCircle2, Circle } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { Toast, useToast } from '@/components/ui/Toast';
-import { useLanguage } from "@/context/LanguageContext";
 
 function SetNewPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const { toast, showToast, hideToast } = useToast();
-  const { t } = useLanguage();
 
   // Form State
   const [password, setPassword] = useState('');
@@ -67,10 +65,10 @@ function SetNewPasswordContent() {
 
   const getStrengthDisplay = () => {
     switch (score) {
-      case 1: return { text: t("signUp.weak"), color: 'bg-red-500', textColor: 'text-red-500' };
-      case 2: return { text: t("signUp.fair"), color: 'bg-orange-400', textColor: 'text-orange-500' };
-      case 3: return { text: t("signUp.strong"), color: 'bg-[#85c977]', textColor: 'text-[#85c977]' };
-      case 4: return { text: t("signUp.strong"), color: 'bg-[#549B45]', textColor: 'text-[#549B45]' };
+      case 1: return { text: 'Weak', color: 'bg-red-500', textColor: 'text-red-500' };
+      case 2: return { text: 'Fair', color: 'bg-orange-400', textColor: 'text-orange-500' };
+      case 3: return { text: 'Strong', color: 'bg-[#85c977]', textColor: 'text-[#85c977]' };
+      case 4: return { text: 'Strong', color: 'bg-[#549B45]', textColor: 'text-[#549B45]' };
       default: return { text: '', color: 'bg-gray-200', textColor: 'text-gray-400' };
     }
   };
@@ -187,13 +185,13 @@ function SetNewPasswordContent() {
         {/* Back Button */}
         <Link href="/auth/individual/sign-in" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm md:text-base z-10">
           <ArrowLeft className="w-5 h-5" />
-          <span>{t("common.back")}</span>
+          <span>Back to Sign In</span>
         </Link>
 
         {/* Language Selector */}
         <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer shadow-sm">
           <Globe className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-600">{t("common.english")}</span>
+          <span className="text-sm font-medium text-gray-600">English</span>
         </button>
 
       </header>
@@ -226,7 +224,7 @@ function SetNewPasswordContent() {
             {/* Password Input */}
             <div className="w-full mb-2">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-2">
-                {t("signIn.password")}
+                Password
               </label>
               <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#549B45] transition-colors shadow-sm">
                 <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
@@ -234,15 +232,18 @@ function SetNewPasswordContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  name="password" placeholder={t("signUp.createPassword")}
+                  name="password" placeholder="Enter new password"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  title={showPassword ? "Hide password" : "Show password"}
                   className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -267,7 +268,7 @@ function SetNewPasswordContent() {
             {/* Confirm Password Input */}
             <div className="w-full mb-8">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-2">
-                {t("signUp.confirmPwd")}
+                Confirm Password
               </label>
               <div className={`relative flex items-center border rounded-2xl px-4 py-3.5 bg-white transition-colors shadow-sm ${
                 confirmPassword.length > 0 && !passwordsMatch
@@ -279,15 +280,18 @@ function SetNewPasswordContent() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  name="password" placeholder={t("signUp.confirmPwd")}
+                  name="password" placeholder="Confirm new password"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  aria-pressed={showConfirmPassword}
+                  title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
               </div>
             </div>

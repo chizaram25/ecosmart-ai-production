@@ -4,11 +4,9 @@ import { useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Upload, Home } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function ScanUploadPage() {
   const router = useRouter();
-  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,16 +33,16 @@ export default function ScanUploadPage() {
           className="inline-flex items-center gap-2 text-base text-slate-600 mb-4"
         >
           <ArrowLeft className="h-5 w-5" />
-          {t("common.backToScanner")}
+          Back to Scanner
         </Link>
 
         <div className="overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_20px_80px_rgba(0,0,0,0.12)]">
           <div className="border-b border-black/5 px-5 py-4 sm:px-6">
             <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-              {t("scanner.uploadingImage")}
+              Upload Waste Image
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              {t("scanner.uploadDesc")}
+              Select a photo of your waste item to analyze
             </p>
           </div>
 
@@ -58,10 +56,10 @@ export default function ScanUploadPage() {
               </div>
               <div>
                 <p className="text-lg font-semibold text-slate-800">
-                  {t("scanner.tapToUpload")}
+                  Tap to upload an image
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {t("scanner.maxSize")}
+                  JPG, PNG or HEIC — Max 10MB
                 </p>
               </div>
             </div>
@@ -80,7 +78,7 @@ export default function ScanUploadPage() {
                 className="inline-flex items-center gap-2 text-sm font-medium text-[#5d9d35] hover:underline"
               >
                 <Home className="h-4 w-4" />
-                {t("scanner.useCameraInstead")}
+                Use camera instead
               </Link>
             </div>
           </div>

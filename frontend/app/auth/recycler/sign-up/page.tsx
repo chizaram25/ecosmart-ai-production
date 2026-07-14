@@ -8,12 +8,9 @@ import {
   AlertCircle, Check, CheckCircle2
 } from 'lucide-react';
 import { authApi } from '@/lib/api';
-import { setToken, setUser } from '@/lib/auth';
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function RecyclerSignUpPage() {
   const router = useRouter();
-  const { t, currentLang } = useLanguage();
 
   // Form State
   const [name, setName] = useState('');
@@ -27,10 +24,8 @@ export default function RecyclerSignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
-  const [loading, setLoading] = useState(false);
-  
-  // FIX 1: Added a state variable to catch and display backend errors
-  const [apiError, setApiError] = useState(''); 
+  const [loading, setLoading] = useState(false); // Added loading state
+  const [serverError, setServerError] = useState('');
 
   // Field Validation States
   const [isNameValid, setIsNameValid] = useState(false);
@@ -78,11 +73,6 @@ export default function RecyclerSignUpPage() {
     setIsFormValid(nameValid && emailValid && phoneValid && passValid && confirmMatch && agreed);
   }, [name, email, phone, password, confirmPassword, agreed]);
 
-  // FIX 2: Clear API error when user tries typing a new email
-  useEffect(() => {
-    if (apiError) setApiError('');
-  }, [email, phone]);
-
   // Password Strength Score (0 to 4)
   const getStrengthScore = () => {
     if (password.length === 0) return 0;
@@ -97,9 +87,9 @@ export default function RecyclerSignUpPage() {
 
   const getStrengthDisplay = () => {
     if (score === 0) return { text: '', color: 'bg-gray-200', textColor: '' };
-    if (score <= 2) return { text: t("signUp.weak") || "Weak", color: 'bg-red-500', textColor: 'text-red-500' };
-    if (score === 3) return { text: t("signUp.fair") || "Fair", color: 'bg-amber-400', textColor: 'text-amber-500' };
-    return { text: t("signUp.strong") || "Strong", color: 'bg-[#549B45]', textColor: 'text-[#549B45]' };
+    if (score <= 2) return { text: 'Weak', color: 'bg-red-500', textColor: 'text-red-500' };
+    if (score === 3) return { text: 'Fair', color: 'bg-amber-400', textColor: 'text-amber-500' };
+    return { text: 'Strong', color: 'bg-[#549B45]', textColor: 'text-[#549B45]' };
   };
 
   const strength = getStrengthDisplay();
@@ -109,22 +99,18 @@ export default function RecyclerSignUpPage() {
     if (!isFormValid || loading) return;
     
     setLoading(true);
-    setApiError(''); // Clear old errors before trying again
-    
+    setServerError('');
+
     try {
-      const result = await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'recycler');
-      
-      if (result && result.token) {
-        setToken(result.token);
-        if (result.user) setUser(result.user);
-        
-        router.push('/auth/recycler/build-profile');
-      }
-    } catch (err: any) {
-      console.error("Registration error:", err);
-      // FIX 3: Capture the actual error message from the backend so the user can read it
-      setApiError(err.message || "Email or phone number is already registered. Please try logging in.");
-    } finally {
+      // 🛑 STRICT ROLE ASSIGNMENT: Passed 'recycler' to the API
+      await authApi.register(name, email, password, phone.replace(/\D/g, ""), 'recycler');
+
+      // Registration returns NO token — the account is unverified and the backend
+      // has emailed a 6-digit verification code. Verify the email to obtain a login
+      // token; the verify step then routes on to build-profile.
+      router.push(`/auth/recycler/verify-email?email=${encodeURIComponent(email)}&mode=verify`);
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
       setLoading(false);
     }
   };
@@ -132,6 +118,7 @@ export default function RecyclerSignUpPage() {
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col relative overflow-hidden">
 
+      {/* Edge-to-Edge Decorative Top Wave */}
       <div className="absolute top-0 left-0 w-full h-56 md:h-72 lg:h-80 bg-[#f6fcf4] z-0">
          <svg
            viewBox="0 0 1200 120"
@@ -143,56 +130,69 @@ export default function RecyclerSignUpPage() {
          </svg>
       </div>
 
+      {/* Header */}
       <header className="relative z-20 w-full flex justify-end px-6 md:px-12 lg:px-24 pt-6 pb-4">
         <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer shadow-sm">
           <Globe className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-600">{t("common.english") || "English"}</span>
+          <span className="text-sm font-medium text-gray-600">English</span>
         </button>
       </header>
 
+      {/* Main Content Area */}
       <main className="relative z-10 flex-grow w-full max-w-6xl mx-auto px-6 md:px-12 lg:px-20 pt-4 md:pt-12 pb-20 flex flex-col items-center">
 
+        {/* Title Section */}
         <div className="text-center mb-8 md:mb-12 w-full max-w-2xl">
           <h1 className="text-[28px] md:text-4xl lg:text-5xl leading-tight font-bold text-[#1b5030] mb-3 md:mb-5 transition-all">
-            {t("signUp.recyclerTitle") || "Sign up as a Recycler"}
+            Create Your Recycler Account.
           </h1>
           <p className="text-[13px] md:text-base text-gray-500 font-medium leading-relaxed px-4">
-            {t("signUp.recyclerDesc") || "Create an account to start accepting waste and growing your recycling business."}
+            Start accepting recycling requests and grow your business with EcoSmart AI.
           </p>
         </div>
 
+        {/* Form Container */}
         <div className="w-full bg-white md:bg-gray-50/30 md:border md:border-gray-100 md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:p-10 lg:p-12">
 
+          {/* Status Badge */}
           <div className="flex justify-center mb-10">
             <div className="flex items-center gap-2 bg-[#eaf4e7] rounded-full px-4 py-1.5 md:py-2 md:px-5 transition-all">
               <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#449339]" />
               <span className="text-[13px] md:text-sm font-medium text-[#449339]">
-                {t("signUp.signingUpAsRecycler") || "Signing up as a Recycler"}
+                Signing up as a Recycler
               </span>
               <Link
                 href="/auth/individual/sign-up"
                 className="text-[13px] md:text-sm font-medium text-gray-500 hover:text-[#1b5030] ml-2 transition-colors underline-offset-2 hover:underline"
               >
-                {t("signIn.change") || "Change"}
+                Change
               </Link>
             </div>
           </div>
 
           <form className="w-full" onSubmit={handleSubmit}>
-
-            {/* FIX 4: Visually display the API error above the form if it exists */}
-            {apiError && (
-              <div className="mb-6 w-full max-w-2xl mx-auto flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <p className="text-sm font-medium leading-snug">{apiError}</p>
+            {submitError && (
+              <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{submitError}</p>
               </div>
             )}
 
+            {/* Server Error Banner */}
+            {serverError && (
+              <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-[13px] md:text-sm text-red-600 font-medium">{serverError}</p>
+              </div>
+            )}
+
+            {/* Responsive Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              
+
+              {/* Business Name */}
               <div>
                 <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
-                  {t("signUp.businessName") || "Business Name"}
+                  Business Name
                 </label>
                 <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
                   <User className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
@@ -207,10 +207,9 @@ export default function RecyclerSignUpPage() {
                 </div>
               </div>
 
+              {/* Email Address */}
               <div>
-                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
-                  {t("signUp.emailAddress") || "Email Address"}
-                </label>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Email Address</label>
                 <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
                   <Mail className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
                   <input
@@ -224,10 +223,9 @@ export default function RecyclerSignUpPage() {
                 </div>
               </div>
 
+              {/* Phone Number */}
               <div className="md:col-span-2 w-full">
-                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">
-                  {t("signUp.phoneNumber") || "Phone Number"}
-                </label>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Phone Number</label>
                 <div className={`relative flex items-center border rounded-2xl bg-white overflow-hidden transition-colors shadow-sm ${!isPhoneValid && phoneTouched ? 'border-red-400' : 'border-gray-200 focus-within:border-[#449339]'}`}>
                   <div className="flex items-center gap-2 px-4 py-3.5 bg-white border-r border-gray-200 shrink-0">
                     <div className="w-5 h-3.5 bg-green-600 rounded-[2px] relative overflow-hidden flex shadow-sm">
@@ -256,31 +254,36 @@ export default function RecyclerSignUpPage() {
                 {!isPhoneValid && phoneTouched && phone.length > 0 && (
                   <p className="text-[11px] md:text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    {t("common.enterValidNumber") || "Enter a valid 10-digit number"}
+                    Enter a valid 10-digit Nigerian phone number
                   </p>
                 )}
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">{t("signIn.password") || "Password"}</label>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Password</label>
                 <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
                   <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    name="password" placeholder={t("signUp.createPassword") || "Create Password"}
+                    name="password" placeholder="Create a password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    title={showPassword ? "Hide password" : "Show password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
 
+                {/* Password Strength Indicator */}
                 <div className="w-full mt-1 px-1">
                   <div className="flex gap-1 mb-1.5 h-1.5">
                     {[1, 2, 3, 4].map((bar) => (
@@ -298,36 +301,42 @@ export default function RecyclerSignUpPage() {
                     </p>
                   )}
                   <p className="text-[11px] text-gray-400 mt-1 leading-snug">
-                    {t("signUp.passwordStrength") || "8+ chars, 1 uppercase, 1 number/special"}
+                    At least 8 characters, one uppercase, one number or special character.
                   </p>
                 </div>
               </div>
 
+              {/* Confirm Password */}
               <div>
-                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">{t("signUp.confirmPwd") || "Confirm Password"}</label>
+                <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-1.5 md:mb-2">Confirm Password</label>
                 <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#449339] transition-colors shadow-sm">
                   <Lock className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    name="password" placeholder={t("signUp.confirmPwd") || "Confirm Password"}
+                    name="password" placeholder="Confirm your password"
                     className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    aria-pressed={showConfirmPassword}
+                    title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                     className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer shrink-0"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
             </div>
 
+            {/* Bottom Section */}
             <div className="mt-10 md:mt-12 max-w-2xl mx-auto w-full flex flex-col items-center">
 
+              {/* Terms Checkbox */}
               <div className="flex items-start md:items-center justify-center gap-3 mb-6 w-full">
                 <div
                   className={`w-5 h-5 rounded-full border flex items-center justify-center cursor-pointer mt-0.5 md:mt-0 shrink-0 transition-colors ${agreed ? 'bg-[#449339] border-[#449339]' : 'border-gray-300'}`}
@@ -336,10 +345,11 @@ export default function RecyclerSignUpPage() {
                   {agreed && <Check className="w-3 h-3 text-white" />}
                 </div>
                 <p className="text-[13px] md:text-sm text-gray-700 leading-snug">
-                  {t("common.iAgree") || "I agree to the"} <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">{t("common.termsAndConditions") || "Terms and Conditions"}</a> {t("common.and") || "and"} <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">{t("common.privacyPolicy") || "Privacy Policy"}</a>
+                  I agree to the <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">Terms & Conditions</a> and <a href="#" className="font-semibold text-[#1b5030] hover:text-[#449339] transition-colors underline decoration-[#1b5030]/30 underline-offset-2">Privacy Policy</a>
                 </p>
               </div>
 
+              {/* Submit Button */}
               <button
                 disabled={!isFormValid || loading}
                 className={`w-full py-4 rounded-full font-semibold text-[15px] md:text-[16px] transition-all duration-300 ${
@@ -348,12 +358,13 @@ export default function RecyclerSignUpPage() {
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                {loading ? (t("common.creatingAccount") || "Creating Account...") : (t("common.createAccount") || "Create Account")}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
 
+              {/* Footer Link */}
               <div className="text-center w-full mt-8">
                 <p className="text-[13px] md:text-sm text-gray-600">
-                  {t("common.alreadyHaveAccount") || "Already have an account?"} <Link href="/auth/recycler/sign-in" className="font-bold text-[#1b5030] hover:text-[#449339] transition-colors hover:underline underline-offset-2">{t("common.signIn") || "Sign In"}</Link>
+                  Already have an account? <Link href="/auth/recycler/sign-in" className="font-bold text-[#1b5030] hover:text-[#449339] transition-colors hover:underline underline-offset-2">Sign in</Link>
                 </p>
               </div>
             </div>

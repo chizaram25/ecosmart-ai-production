@@ -11,7 +11,6 @@ import EcoTipCard from "@/components/dashboard/EcoTips";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import BottomNav from "@/components/dashboard/BottomNav";
 import NavigationSidebar from "@/components/dashboard/NavigationSidebar";
-import { useLanguage } from "@/context/LanguageContext";
 
 import { navItems, quickActions } from "@/lib/dashboard-data";
 import {
@@ -39,9 +38,6 @@ export default function EcoSmartDashboardPage() {
   const [isNavSidebarOpen, setIsNavSidebarOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  
-  // Translation function 't'
-  const { t } = useLanguage();
 
   useEffect(() => {
     if (!hydrated) {
@@ -63,10 +59,10 @@ export default function EcoSmartDashboardPage() {
 
     if (!savedToken) return;
 
-    // FIX 1: Renamed argument from 't' to 'token'
-    const fetchDashboard = async (token: string) => {
+    // Fetch real data from API
+    const fetchDashboard = async (t: string) => {
       try {
-        const response = await getDashboardData(token);
+        const response = await getDashboardData(t);
 
         const formattedData: DashboardData = {
           user: {
@@ -76,8 +72,7 @@ export default function EcoSmartDashboardPage() {
           recentActivity: response.recentActivity.map((activity) => ({
             _id: activity.id,
             title: activity.item,
-            // 't' now correctly points to the translation function
-            time: t("dashboard.justNow") || "Just now", 
+            time: "Just now",
             amount: activity.amount,
             status: activity.status === "Recycled" ? "Recycled" : "Pending",
           })),
@@ -91,7 +86,7 @@ export default function EcoSmartDashboardPage() {
     };
 
     fetchDashboard(savedToken);
-  }, [hydrated, t]);
+  }, [hydrated]);
 
   const handleQuickAction = async (actionId: string) => {
     try {
@@ -104,26 +99,20 @@ export default function EcoSmartDashboardPage() {
 
   const handleMarkPendingAsRecycled = async (_id: string) => {
     try {
-      // FIX 2: Renamed local variable from 't' to 'token'
-      const token = getToken();
-      if (!token) return;
-      
-      await markActivityAsRecycled(token, _id);
-      
+      const t = getToken();
+      if (!t) return;
+      await markActivityAsRecycled(t, _id);
       const savedToken = getToken() || "";
       if (!savedToken) return;
-      
       const response = await getDashboardData(savedToken);
       const storedUser = getUser();
-      
       setDashboardData({
         user: { name: storedUser?.name || response.user.name },
         stats: response.stats,
         recentActivity: response.recentActivity.map((activity) => ({
           _id: activity.id,
           title: activity.item,
-          // 't' correctly translates here as well
-          time: t("dashboard.justNow") || "Just now", 
+          time: "Just now",
           amount: activity.amount,
           status: activity.status === "Recycled" ? "Recycled" : "Pending",
         })),
@@ -136,7 +125,7 @@ export default function EcoSmartDashboardPage() {
   if (!hydrated) return null;
 
   const displayData = dashboardData || {
-    user: { name: getUser()?.name || "User" }, 
+    user: { name: getUser()?.name || "User" },
     stats: { totalEarnings: 0, itemsScanned: 0 },
     recentActivity: [],
   };

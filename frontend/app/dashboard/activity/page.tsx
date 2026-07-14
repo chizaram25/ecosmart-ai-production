@@ -14,7 +14,6 @@ import {
 
 import BottomNav from "@/components/dashboard/BottomNav";
 import { navItems } from "@/lib/dashboard-data";
-import { useLanguage } from "@/context/LanguageContext";
 import { wasteApi } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type { WasteScanResult } from "@/lib/api";
@@ -77,7 +76,6 @@ function scanToActivity(scan: WasteScanResult): ActivityRecord {
 type FilterType = "All" | "Recycled" | "Pending";
 
 export default function ActivityPage() {
-  const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [activeTab, setActiveTab] = useState<
     "home" | "scan" | "activity" | "profile"
@@ -137,10 +135,10 @@ export default function ActivityPage() {
               <div className="flex-1 px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
                 <div>
                   <h1 className="text-[2rem] font-bold text-[#246c3b] sm:text-[2.3rem] lg:text-[2.7rem]">
-                    {t("common.activity")}
+                    Activity
                   </h1>
                   <p className="mt-2 text-base text-slate-500 sm:text-lg">
-                    {t("dashboard.trackJourney")}
+                    Track your recycling journey
                   </p>
                 </div>
 
@@ -149,31 +147,31 @@ export default function ActivityPage() {
                     icon={<TrendingUp className="h-5 w-5" />}
                     iconWrapClass="bg-[#ddebd6] text-[#5b9938]"
                     value={`₦${totalEarned.toLocaleString()}`}
-                    label={t("dashboard.totalEarned")}
+                    label="Total Earned"
                   />
                   <StatCard
                     icon={<Package className="h-5 w-5" />}
                     iconWrapClass="bg-[#f8ebc7] text-[#d9a11b]"
                     value={`${totalKg}kg`}
-                    label={t("dashboard.totalKg")}
+                    label="Total kg"
                   />
                   <StatCard
                     icon={<Recycle className="h-5 w-5" />}
                     iconWrapClass="bg-[#dff4e6] text-[#22b455]"
                     value={`${recycledCount}`}
-                    label={t("dashboard.itemsRecycled")}
+                    label="Items Recycled"
                   />
                   <StatCard
                     icon={<CalendarDays className="h-5 w-5" />}
                     iconWrapClass="bg-[#dfe9d9] text-[#2f7d32]"
                     value={`${thisWeekCount}`}
-                    label={t("dashboard.thisWeek")}
+                    label="This Week"
                   />
                 </section>
 
                 {/* Loading / Error / Empty states */}
                 {loading && (
-                  <div className="mt-8 text-center text-slate-500">{t("common.loading")}</div>
+                  <div className="mt-8 text-center text-slate-500">Loading activities...</div>
                 )}
                 {error && (
                   <div className="mt-8 rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
@@ -215,7 +213,7 @@ export default function ActivityPage() {
                         >
                           <Filter className="h-5 w-5" />
                           <span className="text-sm font-medium sm:text-base">
-                            {t("common.filter")}
+                            Filter
                           </span>
                         </button>
                       </div>
@@ -223,13 +221,13 @@ export default function ActivityPage() {
                       {filteredActivities.length === 0 ? (
                         <div className="rounded-3xl bg-white px-5 py-10 text-center text-slate-400 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                           <Recycle className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-                          <p className="text-lg font-medium">{t("common.noActivityYet")}</p>
-                          <p className="mt-1 text-sm">{t("dashboard.startScanning")}</p>
+                          <p className="text-lg font-medium">No activity yet</p>
+                          <p className="mt-1 text-sm">Start scanning waste to build your history.</p>
                           <Link
                             href="/dashboard/scan"
                             className="mt-4 inline-block rounded-full bg-[#5d9d35] px-6 py-2 text-sm font-semibold text-white"
                           >
-                            {t("common.scanNow")}
+                            Scan Now
                           </Link>
                         </div>
                       ) : (

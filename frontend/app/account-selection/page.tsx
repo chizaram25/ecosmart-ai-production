@@ -1,36 +1,20 @@
 "use client";
 
-import { useState, Suspense, useRef, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Languages, ChevronDown, User, Recycle, ArrowRight } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
-import { SUPPORTED_LANGUAGES } from "@/lib/translations";
+import { Globe, User, Recycle, ArrowRight } from "lucide-react";
 
+// 1. We rename your main component to 'Content' so we can wrap it in Suspense later
 function AccountSelectionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
   const [selected, setSelected] = useState<"individual" | "recycler" | null>(null);
-  const [isLangOpen, setIsLangOpen] = useState(false);
-  const { currentLang, setCurrentLang, t } = useLanguage();
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsLangOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Read the URL to see if they came from a 'login' button
+  // 2. Read the URL to see if they came from a 'login' button
   const mode = searchParams.get("mode");
   
-  // Set the destination based on the mode. 
+  // 3. Set the destination based on the mode. 
+  // (Note: Change "sign-in" to "login" below if your folder is named /auth/individual/login)
   const destination = mode === "login" ? "sign-in" : "sign-up"; 
 
   const handleSelect = (role: "individual" | "recycler") => {
@@ -38,6 +22,7 @@ function AccountSelectionContent() {
     // Brief delay to show green state before navigating
     setTimeout(() => {
       if (role === "individual") {
+        // 4. Inject the dynamic destination into the router path
         router.push(`/auth/individual/${destination}`);
       } else {
         router.push(`/auth/recycler/${destination}`);
@@ -57,40 +42,10 @@ function AccountSelectionContent() {
             className="h-8 w-auto object-contain"
           />
         </div>
-        
-        {/* Language Dropdown Container */}
-        <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => setIsLangOpen(!isLangOpen)}
-            className="flex items-center gap-1.5 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <Languages className="w-3.5 h-3.5 text-gray-500" />
-            <span className="text-xs md:text-sm font-medium text-gray-600">{SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.nativeName || "English"}</span>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Dropdown Menu */}
-          {isLangOpen && (
-            <div className="absolute top-full right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => {
-                    setCurrentLang(lang.code);
-                    setIsLangOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                    currentLang === lang.code
-                      ? 'bg-[#f1f7ef] text-[#449339] font-semibold'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  {lang.nativeName}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer">
+          <Globe className="w-3.5 h-3.5 text-gray-500" />
+          <span className="text-xs md:text-sm font-medium text-gray-600">English</span>
+        </button>
       </header>
 
       {/* Hero Video */}
@@ -130,7 +85,7 @@ function AccountSelectionContent() {
             Welcome to EcoSmart AI
           </h1>
           <p className="text-sm md:text-base text-gray-500 font-medium">
-            {t("accountSelection.chooseOption")}
+            Choose the option that best describes you
           </p>
         </div>
 
@@ -138,7 +93,7 @@ function AccountSelectionContent() {
         <div className="flex items-center justify-center max-w-3xl mx-auto mb-10 md:mb-14 w-full">
           <div className="h-px bg-gray-200 flex-grow" />
           <span className="mx-4 text-xs md:text-sm font-bold tracking-widest text-[#449339] uppercase whitespace-nowrap">
-            {t("accountSelection.iAmA")}
+            I am a...
           </span>
           <div className="h-px bg-gray-200 flex-grow" />
         </div>
@@ -163,10 +118,10 @@ function AccountSelectionContent() {
 
             <div className="relative z-10 flex-grow">
               <h2 className={`font-bold text-xl md:text-2xl mb-3 ${selected === "individual" ? "text-white" : "text-gray-900"}`}>
-                {t("accountSelection.individual")}
+                Individual
               </h2>
               <p className={`text-sm md:text-base leading-relaxed max-w-[85%] ${selected === "individual" ? "text-white/90" : "text-gray-500"}`}>
-                {t("accountSelection.individualDesc")}
+                Use the platform to identify, book pickups, and earn rewards.
               </p>
             </div>
 
@@ -192,10 +147,10 @@ function AccountSelectionContent() {
 
             <div className="flex-grow">
               <h2 className={`font-bold text-xl md:text-2xl mb-3 ${selected === "recycler" ? "text-white" : "text-gray-900"}`}>
-                {t("accountSelection.recycler")}
+                Recycler
               </h2>
               <p className={`text-sm md:text-base leading-relaxed max-w-[85%] ${selected === "recycler" ? "text-white/90" : "text-gray-500"}`}>
-                {t("accountSelection.recyclerDesc")}
+                Manage collections, grow your business, and earn more.
               </p>
             </div>
 
@@ -211,6 +166,7 @@ function AccountSelectionContent() {
   );
 }
 
+// 5. This is the main export. It safely wraps the component in a Suspense boundary.
 export default function AccountSelection() {
   return (
     <Suspense fallback={

@@ -1,23 +1,19 @@
-'use client';
-
 import { ScanLine, Layers, DollarSign, MapPin, Calendar, Sparkles } from 'lucide-react';
-import { useLanguage } from "@/context/LanguageContext";
 
 export function PoweredByAI() {
-  const { t } = useLanguage();
   const features = [
-    { label: t("landing.wasteId"), icon: ScanLine },
-    { label: t("landing.materialClass"), icon: Layers },
-    { label: t("landing.valueEstimate"), icon: DollarSign },
-    { label: t("landing.recyclerMatch"), icon: MapPin },
-    { label: t("landing.pickupScheduling"), icon: Calendar },
-    { label: t("landing.aiAssistant"), icon: Sparkles },
+    { label: 'Waste ID', icon: ScanLine },
+    { label: 'Material Class', icon: Layers },
+    { label: 'Value Estimate', icon: DollarSign },
+    { label: 'Recycler Match', icon: MapPin },
+    { label: 'Pickup Scheduling', icon: Calendar },
+    { label: 'AI Assistant', icon: Sparkles },
   ];
 
   return (
     <section className="w-full max-w-6xl mx-auto px-6 mb-20 md:mb-28">
       <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">
-        {t("landing.poweredByAI")}
+        Powered by AI
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
         {features.map((feature, idx) => {

@@ -1,7 +1,6 @@
 import { Clock3 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import type { ActivityItem } from "../../types/dashboard";
-import { useLanguage } from "@/context/LanguageContext";
 
 type RecentActivityProps = {
   activities: ActivityItem[];
@@ -16,19 +15,17 @@ export default function RecentActivity({
   setActiveTab,
   markPendingAsRecycled,
 }: RecentActivityProps) {
-  const { t } = useLanguage();
-
   return (
     <section className="pb-2">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-xl font-semibold text-slate-900 sm:text-2xl">
-          {t("dashboard.recentActivity")}
+          Recent Activity
         </h3>
         <button
           onClick={() => setActiveTab("activity")}
           className="text-lg font-semibold text-[#5c9d35] hover:underline"
         >
-          {t("dashboard.viewAll")}
+          View All
         </button>
       </div>
 
@@ -62,7 +59,7 @@ export default function RecentActivity({
                     {item.title}
                   </h4>
                   <p className="text-base text-slate-500">
-                    {item.time || t("dashboard.justNow")}
+                    {item.time || "Just now"}
                   </p>
                 </div>
               </div>
@@ -83,7 +80,7 @@ export default function RecentActivity({
                     onClick={() => markPendingAsRecycled(item._id)}
                     className="text-sm font-medium text-[#5c9d35] hover:underline"
                   >
-                    {t("dashboard.markDone")}
+                    Mark done
                   </button>
                 )}
               </div>

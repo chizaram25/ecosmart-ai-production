@@ -5,18 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Globe, ChevronLeft, Check, AlertCircle, ArrowRight, Bot,
-  Milk, Wine, FileText, Package, Cylinder, Cog, Laptop,
-  Battery, Shirt, Disc, Leaf, TreePine, Home, MapPin, Truck,
-  Briefcase, PartyPopper, AlertTriangle
+  Leaf, Home, MapPin, Truck, Briefcase, PartyPopper, AlertTriangle
 } from 'lucide-react';
+import { RECYCLER_MATERIALS } from '../materials';
 
 export default function ProfileCategoriesStep() {
   const router = useRouter();
 
-  // FIX: Initialized arrays as empty so nothing is pre-selected
+  // Form State
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
-  
   const [sameDayPickup, setSameDayPickup] = useState(false);
   const [scheduledBookings, setScheduledBookings] = useState(true);
   const [minQuantity, setMinQuantity] = useState('');
@@ -36,21 +34,23 @@ export default function ProfileCategoriesStep() {
   });
   const [isFormValid, setIsFormValid] = useState(false);
 
-  // Data Arrays
-  const materials = [
-    { id: 'Plastic', desc: 'PET, HDPE, LDPE', icon: Milk },
-    { id: 'Glass', desc: 'Bottles & jars', icon: Wine },
-    { id: 'Paper', desc: 'Newspapers, office', icon: FileText },
-    { id: 'Cardboard', desc: 'Boxes & packaging', icon: Package },
-    { id: 'Aluminium', desc: 'Cans & foil', icon: Cylinder },
-    { id: 'Steel', desc: 'Scrap metal', icon: Cog },
-    { id: 'Electronics', desc: 'E-waste', icon: Laptop },
-    { id: 'Batteries', desc: 'All types', icon: Battery },
-    { id: 'Textiles', desc: 'Clothing & fabric', icon: Shirt },
-    { id: 'Rubber', desc: 'Tyres & hoses', icon: Disc },
-    { id: 'Organic Waste', desc: 'Food & garden', icon: Leaf },
-    { id: 'Wood', desc: 'Timbers, woods', icon: TreePine },
-  ];
+  // Rehydrate from the saved draft so going back to this step repopulates it.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("recycler_categories") || "{}");
+      if (Array.isArray(saved.selectedMaterials)) setSelectedMaterials(saved.selectedMaterials);
+      if (Array.isArray(saved.selectedMethods)) setSelectedMethods(saved.selectedMethods);
+      if (typeof saved.sameDayPickup === "boolean") setSameDayPickup(saved.sameDayPickup);
+      if (typeof saved.scheduledBookings === "boolean") setScheduledBookings(saved.scheduledBookings);
+      if (saved.minQuantity) setMinQuantity(saved.minQuantity);
+    } catch {
+      /* ignore malformed draft */
+    }
+  }, []);
+
+  // Materials come from the shared catalog so the exact ids selected here are
+  // what Step 4 prices.
+  const materials = RECYCLER_MATERIALS;
 
   const methods = [
     { id: 'Home Pickup', icon: Home },
@@ -119,6 +119,7 @@ export default function ProfileCategoriesStep() {
   return (
     <div className="min-h-screen bg-[#fcfdfc] font-sans text-gray-900 selection:bg-green-100 selection:text-green-900 flex flex-col relative pb-10 overflow-x-hidden">
 
+      {/* Decorative Top Wave */}
       <div className="absolute top-0 left-0 w-full h-56 md:h-72 lg:h-80 bg-[#f6fcf4] z-0 pointer-events-none">
          <svg
            viewBox="0 0 1200 120"
@@ -130,6 +131,7 @@ export default function ProfileCategoriesStep() {
          </svg>
       </div>
 
+      {/* Header */}
       <header className="relative z-20 w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 pt-6 pb-4">
         <div className="flex items-center gap-1.5 cursor-pointer">
           <div className="bg-green-50 p-1.5 rounded-full">
@@ -146,8 +148,10 @@ export default function ProfileCategoriesStep() {
         </button>
       </header>
 
+      {/* Main Form Area */}
       <main className="relative z-10 flex-grow w-full max-w-4xl mx-auto px-6 md:px-12 pt-4 md:pt-8 flex flex-col">
 
+        {/* Progress Navigation */}
         <div className="w-full mb-8">
           <div className="flex justify-between items-center mb-4">
             <Link href="/auth/recycler/build-profile/location" className="flex items-center gap-1.5 text-[#1b5030] hover:text-[#549B45] font-semibold text-[14px] md:text-[15px] transition-colors cursor-pointer">
@@ -159,6 +163,7 @@ export default function ProfileCategoriesStep() {
             </div>
           </div>
 
+          {/* Progress Bars (Step 3 of 4) */}
           <div className="flex gap-2 w-full mb-2">
             <div className="h-1.5 flex-1 bg-[#549B45] rounded-full"></div>
             <div className="h-1.5 flex-1 bg-[#549B45] rounded-full"></div>
@@ -171,6 +176,7 @@ export default function ProfileCategoriesStep() {
           </div>
         </div>
 
+        {/* Title & Selection Badge */}
         <div className="mb-8 md:mb-10 relative">
           <h1 className="text-[28px] md:text-4xl lg:text-[40px] leading-tight font-extrabold text-[#111827] mb-2 md:mb-3 pr-24">
             What do you collect?
@@ -186,6 +192,7 @@ export default function ProfileCategoriesStep() {
 
         <form className="w-full flex flex-col gap-10 md:gap-12 relative" onSubmit={handleSubmit}>
 
+          {/* MATERIALS GRID */}
           <div>
             <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 ${errors.materials ? 'p-3 border border-red-200 rounded-3xl bg-red-50/30' : ''}`}>
               {materials.map((mat) => {
@@ -221,6 +228,7 @@ export default function ProfileCategoriesStep() {
             )}
           </div>
 
+          {/* COLLECTION METHODS */}
           <div>
             <h3 className="font-bold text-[15px] md:text-[16px] text-gray-900 mb-4">
               How do you collect recyclable materials?
@@ -262,7 +270,9 @@ export default function ProfileCategoriesStep() {
             )}
           </div>
 
+          {/* TOGGLES & QUANTITY */}
           <div className="flex flex-col gap-6 md:gap-8 bg-white border border-gray-100 rounded-[1.5rem] p-5 md:p-8 shadow-sm">
+
             <div className="flex justify-between items-center">
               <span className="font-bold text-[14px] md:text-[15px] text-gray-900">Offer Same-Day Pickup</span>
               <button
@@ -318,6 +328,7 @@ export default function ProfileCategoriesStep() {
             </div>
           </div>
 
+          {/* INFO BANNERS */}
           <div className="flex flex-col gap-3">
             <div className="bg-[#fef9e8] rounded-2xl p-4 md:p-5 flex items-start md:items-center gap-4 border border-[#f5a623]/20">
               <div className="mt-0.5 md:mt-0 shrink-0">
@@ -337,6 +348,7 @@ export default function ProfileCategoriesStep() {
             </div>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={!isFormValid}
@@ -351,6 +363,7 @@ export default function ProfileCategoriesStep() {
 
         </form>
 
+        {/* Footer Navigation Tabs */}
         <div className="flex justify-center gap-4 md:gap-8 mt-12 text-[12px] md:text-[14px]">
           <Link href="/auth/recycler/build-profile" className="font-medium text-[#549B45] hover:text-gray-900">Basic Info</Link>
           <Link href="/auth/recycler/build-profile/location" className="font-medium text-gray-400 hover:text-[#549B45]">Location</Link>

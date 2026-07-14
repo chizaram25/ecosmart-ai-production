@@ -5,14 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Globe, Lock } from 'lucide-react';
 import { otpApi } from '@/lib/api';
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { t } = useLanguage();
-
-  // Method State (Email vs Phone)
-  const [method, setMethod] = useState<'email' | 'phone'>('email');
 
   // Input State
   const [inputValue, setInputValue] = useState('');
@@ -24,28 +19,11 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Nigeria country code
-  const countryCode = '+234';
-
-  // Real-time Validation Effect
+  // Real-time Validation Effect (email-only — the backend sends reset codes by email)
   useEffect(() => {
-    if (method === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      setIsValid(emailRegex.test(inputValue));
-    } else {
-      // NG phone validation: expect 10 digits after +234
-      const cleanPhone = inputValue.replace(/\D/g, '');
-      const normalized = cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone;
-      setIsValid(normalized.length === 10);
-    }
-  }, [inputValue, method]);
-
-  // Handle method change and clear input
-  const handleMethodChange = (newMethod: 'email' | 'phone') => {
-    setMethod(newMethod);
-    setInputValue('');
-    setError('');
-  };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsValid(emailRegex.test(inputValue));
+  }, [inputValue]);
 
   // Handle Continue — send OTP and navigate to verification page
   const handleContinue = async () => {
@@ -54,26 +32,12 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      // Build the full identifier
-      let identifier: string;
-      if (method === 'email') {
-        identifier = inputValue.trim();
-      } else {
-        const cleanPhone = inputValue.replace(/\D/g, '');
-        const normalized = cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone;
-        identifier = countryCode + normalized;
-      }
+      const identifier = inputValue.trim();
 
-      // Send OTP
-      await otpApi.send(method, identifier);
+      // Send the password-reset OTP by email
+      await otpApi.send('email', identifier);
 
-      // Navigate to the appropriate OTP verification page
-      const queryParam = encodeURIComponent(identifier);
-      if (method === 'email') {
-        router.push(`/auth/recycler/verify-email?email=${queryParam}`);
-      } else {
-        router.push(`/auth/recycler/verify-sms?phone=${queryParam}`);
-      }
+      router.push(`/auth/recycler/verify-email?email=${encodeURIComponent(identifier)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.');
     } finally {
@@ -102,7 +66,7 @@ export default function ForgotPasswordPage() {
         {/* Language Selector */}
         <button className="flex items-center gap-1.5 border border-gray-200 rounded-full px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer shadow-sm">
           <Globe className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-600">{t("common.english")}</span>
+          <span className="text-sm font-medium text-gray-600">English</span>
         </button>
 
       </header>
@@ -118,39 +82,15 @@ export default function ForgotPasswordPage() {
         {/* Title Section */}
         <div className="text-center mb-8 md:mb-10 w-full">
           <h1 className="text-[28px] md:text-3xl lg:text-4xl leading-tight font-bold text-[#1b5030] mb-2 md:mb-3">
-            {t("forgotPassword.title")}
+            Forgot Password?
           </h1>
           <p className="text-[14px] md:text-base text-gray-500 font-medium px-4">
-            {t("forgotPassword.description")}
+            No worries, we'll send you reset instructions
           </p>
         </div>
 
         {/* Form Container */}
         <div className="w-full max-w-[480px]">
-
-          {/* Email / Phone Toggle */}
-          <div className="flex bg-white border border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-full p-1.5 mb-8 md:mb-10 w-full max-w-[320px] mx-auto">
-            <button
-              onClick={() => handleMethodChange('email')}
-              className={`flex-1 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-300 ${
-                method === 'email'
-                  ? 'bg-[#549B45] text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {t("forgotPassword.email")}
-            </button>
-            <button
-              onClick={() => handleMethodChange('phone')}
-              className={`flex-1 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-300 ${
-                method === 'phone'
-                  ? 'bg-[#549B45] text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {t("forgotPassword.phone")}
-            </button>
-          </div>
 
           {/* Form Box */}
           <form
@@ -160,30 +100,14 @@ export default function ForgotPasswordPage() {
             {/* Input Field */}
             <div className="w-full mb-6">
               <label className="block text-[13px] md:text-sm font-medium text-gray-800 mb-2">
-                {method === 'email' ? t("signUp.emailAddress") : t("signUp.phoneNumber")}
+                Email Address
               </label>
               <div className="relative flex items-center border border-gray-200 rounded-2xl px-4 py-3.5 bg-white focus-within:border-[#549B45] transition-colors shadow-sm">
-                {method === 'phone' && (
-                  <>
-                    <span className="flex items-center gap-1.5 text-[15px] font-semibold text-gray-900 mr-3 whitespace-nowrap">
-                      <span className="text-lg leading-none">🇳🇬</span>
-                      {countryCode}
-                    </span>
-                    <div className="h-6 w-px bg-gray-300 mr-3"></div>
-                  </>
-                )}
                 <input
-                  type={method === 'email' ? 'email' : 'tel'}
+                  type="email"
                   value={inputValue}
-                  onChange={(e) => {
-                    if (method === 'phone') {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setInputValue(val);
-                    } else {
-                      setInputValue(e.target.value);
-                    }
-                  }}
-                  placeholder={method === 'email' ? t("forgotPassword.enterEmail") : t("forgotPassword.enterPhone")}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Enter your email"
                   className="w-full outline-none text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 bg-transparent"
                 />
               </div>
@@ -207,7 +131,7 @@ export default function ForgotPasswordPage() {
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                {loading ? t("common.sending") : t("common.continue_")}
+                {loading ? 'Sending...' : 'Continue'}
               </button>
             </div>
           </form>
@@ -215,7 +139,7 @@ export default function ForgotPasswordPage() {
           {/* Footer Link */}
           <div className="text-center w-full mt-8 md:mt-10">
             <p className="text-[13px] md:text-[14px] text-gray-600 font-medium">
-              {t("common.rememberPassword")} <Link href="/auth/recycler/sign-in" className="font-bold text-[#1b5030] hover:text-[#549B45] transition-colors hover:underline underline-offset-2">{t("common.login")}</Link>
+              Remember password? <Link href="/auth/recycler/sign-in" className="font-bold text-[#1b5030] hover:text-[#549B45] transition-colors hover:underline underline-offset-2">Login</Link>
             </p>
           </div>
 

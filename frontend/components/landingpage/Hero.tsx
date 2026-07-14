@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, ChevronDown, ScanLine, CheckCircle2, ChevronRight, Check, Leaf } from 'lucide-react';
-import { useLanguage } from "@/context/LanguageContext";
 
 export function Hero() {
-  const { t } = useLanguage();
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
   // Auto-advance carousel every 4 seconds
@@ -23,24 +21,24 @@ export function Hero() {
       <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-1/2">
         <div className="inline-flex items-center gap-1.5 bg-[#eaf4e7] text-[#449339] px-3 py-1.5 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider mb-6 lg:mb-8 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          {t("landing.aiPowered")}
+          AI-Powered Recycling
         </div>
 
         <h1 className="text-[38px] md:text-5xl lg:text-[64px] font-extrabold text-[#111827] leading-[1.15] tracking-tight mb-4 lg:mb-6 max-w-lg lg:max-w-none mx-auto lg:mx-0">
-          {t("landing.heroTagline")}
+          Your Waste Has a Price Tag.
         </h1>
 
         <p className="text-[15px] md:text-lg lg:text-xl text-gray-500 font-medium mb-8 lg:mb-10 max-w-md lg:max-w-xl mx-auto lg:mx-0 leading-relaxed">
-          {t("landing.heroSubtext")}
+          Scan it. Know its worth. Get paid by a recycler near you.
         </p>
 
         <div className="flex flex-col lg:flex-row items-center gap-6">
           <Link href="/account-selection" className="bg-[#549B45] hover:bg-[#458237] text-white px-8 py-4 rounded-full font-semibold text-[15px] md:text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 hover:-translate-y-0.5 cursor-pointer">
-            {t("common.getStarted")} <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+            Get Started <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
           </Link>
 
           <button className="text-[#549B45] text-[14px] font-bold flex items-center gap-1 hover:text-[#1b5030] transition-colors cursor-pointer">
-            {t("common.seeHowItWorks")} <ChevronDown className="w-4 h-4" />
+            See how it works <ChevronDown className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -61,10 +59,10 @@ export function Hero() {
               </div>
               <div className="flex justify-between items-center mb-5">
                 <div className="flex items-center gap-1.5 text-[#449339] font-bold text-[14px]">
-                  <ScanLine className="w-4 h-4 md:w-5 md:h-5" /> {t("landing.scanResult")}
+                  <ScanLine className="w-4 h-4 md:w-5 md:h-5" /> Scan Result
                 </div>
                 <div className="flex items-center gap-1 bg-[#eaf4e7] text-[#449339] px-2.5 py-1 rounded-md text-[11px] md:text-xs font-bold">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> {t("landing.identified")}
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Identified
                 </div>
               </div>
               <div className="bg-[#f1f7ef] rounded-2xl p-4 md:p-5 mb-5 flex items-center gap-4">
@@ -80,11 +78,11 @@ export function Hero() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-6 px-1">
-                <div><p className="text-[12px] md:text-[13px] text-gray-500 font-medium mb-1">{t("landing.estValue")}</p><p className="font-bold text-gray-900 text-[15px] md:text-[16px]">₦5.00/unit</p></div>
-                <div><p className="text-[12px] md:text-[13px] text-gray-500 font-medium mb-1">{t("landing.recyclersNear")}</p><p className="font-bold text-gray-900 text-[15px] md:text-[16px]">2 matched</p></div>
+                <div><p className="text-[12px] md:text-[13px] text-gray-500 font-medium mb-1">Est. Value</p><p className="font-bold text-gray-900 text-[15px] md:text-[16px]">₦5.00/unit</p></div>
+                <div><p className="text-[12px] md:text-[13px] text-gray-500 font-medium mb-1">Recyclers Near</p><p className="font-bold text-gray-900 text-[15px] md:text-[16px]">2 matched</p></div>
               </div>
               <button className="w-full bg-[#549B45] text-white rounded-xl py-3.5 md:py-4 text-[13px] md:text-[14px] font-bold flex justify-between items-center px-5 hover:bg-[#458237] transition-colors cursor-pointer">
-                <span>{t("landing.findRecyclerNearby")}</span>
+                <span>Find a Recycler Nearby</span>
                 <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
@@ -120,7 +118,7 @@ export function Hero() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[13px] md:text-[14px] font-bold text-[#111827] leading-tight mb-0.5">Aluminium</span>
-                    <span className="text-[11px] md:text-[12px] text-gray-500 font-medium leading-none">{t("scanner.recyclable")}</span>
+                    <span className="text-[11px] md:text-[12px] text-gray-500 font-medium leading-none">Recyclable</span>
                   </div>
                 </div>
                 <div className="absolute top-[15%] right-[5%] w-12 h-12 md:w-14 md:h-14 bg-[#549B45] rounded-full flex items-center justify-center shadow-lg z-20 animate-in slide-in-from-bottom-4 duration-700 delay-100">
@@ -136,7 +134,7 @@ export function Hero() {
                     <span className="text-[#f5a623] font-bold text-[12px]">N</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] md:text-[11px] text-gray-500 font-medium leading-tight mb-0.5">{t("landing.yourEarnings")}</span>
+                    <span className="text-[10px] md:text-[11px] text-gray-500 font-medium leading-tight mb-0.5">Your Earnings</span>
                     <span className="text-[14px] md:text-[15px] font-bold text-[#549B45] leading-none">₦2,400</span>
                   </div>
                 </div>

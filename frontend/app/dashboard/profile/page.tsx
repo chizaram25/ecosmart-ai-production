@@ -23,7 +23,6 @@ import {
 
 import BottomNav from "@/components/dashboard/BottomNav";
 import { navItems } from "@/lib/dashboard-data";
-import { useLanguage } from "@/context/LanguageContext";
 import { authApi, wasteApi } from "@/lib/api";
 import { getToken, removeToken, removeUser, getUser, type StoredUser } from "@/lib/auth";
 
@@ -37,7 +36,6 @@ type ProfileStats = {
 export default function ProfilePage() {
   const router = useRouter();
 
-  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<
     "home" | "scan" | "activity" | "profile"
   >("profile");
@@ -129,15 +127,15 @@ export default function ProfilePage() {
               <div className="flex-1 px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
                 <div>
                   <h1 className="text-[2rem] font-bold text-[#246c3b] sm:text-[2.3rem] lg:text-[2.7rem]">
-                    {t("profile.title")}
+                    Profile
                   </h1>
                   <p className="mt-2 text-base text-slate-500 sm:text-lg">
-                    {t("profile.manageSettings")}
+                    Manage your account settings
                   </p>
                 </div>
 
                 {loading ? (
-                  <div className="mt-8 text-center text-slate-500">{t("profile.loadingProfile")}</div>
+                  <div className="mt-8 text-center text-slate-500">Loading profile...</div>
                 ) : (
                   <>
                     <section className="mt-8 overflow-hidden rounded-[30px] bg-linear-to-r from-[#5d9d35] to-[#24713d] px-6 py-6 text-white shadow-[0_18px_45px_rgba(90,140,90,0.18)]">
@@ -171,7 +169,7 @@ export default function ProfilePage() {
                             ₦{stats.earnings.toLocaleString()}
                           </div>
                           <div className="text-sm text-white/80 sm:text-base">
-                            {t("dashboard.earnings")}
+                            Earnings
                           </div>
                         </div>
 
@@ -180,7 +178,7 @@ export default function ProfilePage() {
                             {stats.itemsRecycled}
                           </div>
                           <div className="text-sm text-white/80 sm:text-base">
-                            {t("dashboard.itemsRecycled")}
+                            Items Recycled
                           </div>
                         </div>
 
@@ -189,7 +187,7 @@ export default function ProfilePage() {
                             {stats.totalWeightKg}kg
                           </div>
                           <div className="text-sm text-white/80 sm:text-base">
-                            {t("dashboard.totalWeight")}
+                            Total Weight
                           </div>
                         </div>
                       </div>
@@ -197,21 +195,21 @@ export default function ProfilePage() {
 
                     <section className="mt-8">
                       <h3 className="mb-4 text-base font-semibold uppercase tracking-wide text-slate-500">
-                        {t("profile.account")}
+                        Account
                       </h3>
 
                       <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
                         <ProfileRow
                           icon={<Pencil className="h-5 w-5" />}
-                          label={t("profile.editProfile")}
+                          label="Edit Profile"
                         />
                         <ProfileRow
                           icon={<Award className="h-5 w-5" />}
-                          label={t("profile.achievements")}
+                          label="Achievements"
                         />
                         <ProfileRow
                           icon={<TrendingUp className="h-5 w-5" />}
-                          label={t("profile.earningsHistory")}
+                          label="Earnings History"
                         />
                       </div>
                     </section>
@@ -220,10 +218,10 @@ export default function ProfilePage() {
                       <div className="mb-4 flex items-center justify-between gap-4">
                         <div>
                           <h3 className="text-[1.6rem] font-semibold text-[#246c3b]">
-                            {t("profile.yourImpact")}
+                            Your Impact
                           </h3>
                           <p className="mt-1 text-base text-slate-700">
-                            {t("profile.keepUpWork")}
+                            Keep up the great work!
                           </p>
                         </div>
 
@@ -235,16 +233,16 @@ export default function ProfilePage() {
                       <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
                         <ProfileRow
                           icon={<Settings className="h-5 w-5" />}
-                          label={t("profile.settings")}
+                          label="Settings"
                         />
                         <ProfileRow
                           icon={<Bell className="h-5 w-5" />}
-                          label={t("profile.notifications")}
+                          label="Notifications"
                           badge="3"
                         />
                         <ProfileRow
                           icon={<CircleHelp className="h-5 w-5" />}
-                          label={t("profile.helpAndSupport")}
+                          label="Help & Support"
                         />
                       </div>
                     </section>
@@ -256,12 +254,12 @@ export default function ProfilePage() {
                         className="flex w-full items-center justify-center gap-3 rounded-[22px] bg-white px-6 py-5 text-center text-[1.3rem] font-semibold text-red-500 shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition hover:bg-red-50"
                       >
                         <LogOut className="h-6 w-6" />
-                        {t("profile.logOut")}
+                        Log Out
                       </button>
 
                       {stats.memberSince && (
                         <p className="mt-8 text-center text-base text-slate-400">
-                          {t("profile.memberSince")} {stats.memberSince}
+                          Member since {stats.memberSince}
                         </p>
                       )}
                     </section>

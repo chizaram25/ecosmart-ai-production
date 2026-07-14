@@ -1,31 +1,40 @@
 import { getToken } from './auth';
 
+// ── Typed API Error ──
+export class ApiError<T = unknown> extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly data?: T;
+
+  constructor(message: string, status: number, code?: string, data?: T) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.data = data;
+  }
+}
+
+export function isApiError(err: unknown): err is ApiError {
+  return err instanceof ApiError;
+}
+
 // ── Two-Way URL Binding ──
-// Locally: uses NEXT_PUBLIC_API_URL from .env.local (http://localhost:5000/api)
-// Production: falls back to Render URL automatically
-// Also tries to detect localhost from browser URL for seamless switching
 const RENDER_API = 'https://ecosmart-ai-backend.onrender.com/api';
 const LOCAL_API = 'http://localhost:5000/api';
 
 function getBaseUrl(): string {
-  // 1. If env var is explicitly set, use it (takes priority)
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-
-  // 2. Auto-detect: if running in browser on localhost, use local API
   if (typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '0.0.0.0')) {
     return LOCAL_API;
   }
-
-  // 3. Default to Render (production / deployed)
   return RENDER_API;
 }
 
 const BASE_URL = getBaseUrl();
-
-console.log(`[API] Connecting to: ${BASE_URL}`);
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = getToken();
@@ -44,25 +53,26 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers: { ...headers, ...options?.headers },
   });
 
-  // Handle non-JSON responses (like HTML errors from Render/Vercel)
   const contentType = res.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {
     const text = await res.text();
-    console.error(`[API Error] Non-JSON response (${res.status}) from ${url}:`, text.slice(0, 200));
-
-    // Suggest the correct URL to use
     const suggestion = BASE_URL === LOCAL_API ? RENDER_API : LOCAL_API;
-    throw new Error(
-      `Backend returned HTML (${res.status}). ` +
-      `Current API: ${BASE_URL}. ` +
-      `Try switching to: ${suggestion}`
+    throw new ApiError(
+      `Backend returned HTML (${res.status}). Current API: ${BASE_URL}. Try switching to: ${suggestion}`,
+      res.status,
+      'non_json_response'
     );
   }
 
   const data = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.message || `Request failed (${res.status})`);
+    throw new ApiError(
+      data.message || `Request failed (${res.status})`,
+      res.status,
+      data.code,
+      data.data
+    );
   }
 
   return data.data ?? data;
@@ -99,136 +109,48 @@ export interface RecyclerData {
 }
 
 export interface DashboardData {
-  user: { name: string };
-  stats: { totalEarnings: number; itemsScanned: number };
-  recentActivity: Array<{ id: string; item: string; amount: number; status: string }>;
+  user: { businessName: string; isOnline: boolean; dateString: string };
+  wallet: { balance: number; todayPayments: number; weekPurchases: number; pendingSettlements: number };
+  stats: { activeListings: number; avgRating: number; totalKgCollected: number; ecoPoints: number };
+  requests: any[];
+  activities: any[];
+  ecoImpact: { wasteRecycledKg: number; co2ReducedKg: number; individualsRewarded: number; communitiesServed: number };
 }
 
-// ═══════════════════════════════════════════════════
-//  AUTH API — Sign up, login, password reset
-// ═══════════════════════════════════════════════════
+// ── API Exports ──
 export const authApi = {
-  /** POST /api/auth/login — Sign in with email/phone + password */
-  login: (email: string, password: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
-      '/auth/login',
-      { method: 'POST', body: JSON.stringify({ email, password }) }
-    ),
-
-  /** POST /api/auth/register — Create a new account */
-  register: (name: string, email: string, password: string, phone?: string, role?: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
-      '/auth/register',
-      { method: 'POST', body: JSON.stringify({ name, email, password, phone, role }) }
-    ),
-
-  /** GET /api/auth/me — Get current logged-in user profile */
-  getMe: () =>
-    request<{ id: string; name: string; email: string; createdAt: string }>('/auth/me'),
-
-  /** POST /api/auth/forgot-password — Request password reset email */
-  forgotPassword: (email: string) =>
-    request<{ resetToken: string }>('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
-
-  /** POST /api/auth/reset-password — Reset password with token */
-  resetPassword: (token: string, password: string) =>
-    request<{ message: string }>('/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ token, password }),
-    }),
+  login: (email: string, password: string) => request<{ token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (name: string, email: string, password: string, phone?: string, role?: string) => request<{ user: any }>('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, phone, role }) }),
+  getMe: () => request<{ id: string; name: string; email: string; role: string; emailVerified: boolean; createdAt: string }>('/auth/me'),
+  forgotPassword: (email: string) => request<{ email: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) => request<{ message: string }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
 };
 
-// ═══════════════════════════════════════════════════
-//  OTP API — Email/Phone OTP verification
-// ═══════════════════════════════════════════════════
 export const otpApi = {
-  /** POST /api/otp/send — Send OTP to email or phone */
-  send: (method: 'email' | 'phone', identifier: string) =>
-    request<{ masked: string; devOtp?: string }>('/otp/send', {
-      method: 'POST',
-      body: JSON.stringify({ method, identifier }),
-    }),
-
-  /** POST /api/otp/verify — Verify OTP code */
-  verify: (method: 'email' | 'phone', identifier: string, otp: string) =>
-    request<{ verified: boolean; resetToken?: string | null }>('/otp/verify', {
-      method: 'POST',
-      body: JSON.stringify({ method, identifier, otp }),
-    }),
+  send: (method: 'email', identifier: string, purpose: 'email-verification' | 'password-reset' = 'password-reset') => request<{ masked: string; devOtp?: string; alreadyVerified?: boolean }>('/otp/send', { method: 'POST', body: JSON.stringify({ method, identifier, purpose }) }),
+  verify: (method: 'email', identifier: string, otp: string, purpose: 'email-verification' | 'password-reset' = 'password-reset') => request<{ verified: boolean; token?: string; user?: any; resetToken?: string | null }>('/otp/verify', { method: 'POST', body: JSON.stringify({ method, identifier, otp, purpose }) }),
 };
 
-// ═══════════════════════════════════════════════════
-//  WASTE API — Scan, history, results
-// ═══════════════════════════════════════════════════
 export const wasteApi = {
-  /** POST /api/waste/scan — AI-powered waste classification */
-  scan: (body: { text?: string; imageBase64?: string }) =>
-    request<WasteScanResult>('/waste/scan', { method: 'POST', body: JSON.stringify(body) }),
-
-  /** GET /api/waste/history — Get all past scans */
-  getHistory: () =>
-    request<WasteScanResult[]>('/waste/history'),
-
-  /** GET /api/waste/history/:id — Get single scan by ID */
-  getScan: (id: string) =>
-    request<WasteScanResult>(`/waste/history/${id}`),
+  scan: (body: { text?: string; imageBase64?: string }) => request<WasteScanResult>('/waste/scan', { method: 'POST', body: JSON.stringify(body) }),
+  getHistory: () => request<WasteScanResult[]>('/waste/history'),
+  getScan: (id: string) => request<WasteScanResult>(`/waste/history/${id}`),
 };
 
-// ═══════════════════════════════════════════════════
-//  RECYCLER API — Browse and find recyclers
-// ═══════════════════════════════════════════════════
 export const recyclerApi = {
-  /** GET /api/recyclers — List all recyclers (optional ?state= filter) */
-  getAll: (state?: string) =>
-    request<RecyclerData[]>(`/recyclers${state ? `?state=${encodeURIComponent(state)}` : ''}`),
-
-  /** GET /api/recyclers/:id — Get single recycler details */
-  getById: (id: string) =>
-    request<RecyclerData>(`/recyclers/${id}`),
+  getAll: (state?: string) => request<RecyclerData[]>(`/recyclers${state ? `?state=${encodeURIComponent(state)}` : ''}`),
+  getById: (id: string) => request<RecyclerData>(`/recyclers/${id}`),
 };
 
-// ═══════════════════════════════════════════════════
-//  DASHBOARD API — User stats and activity
-// ═══════════════════════════════════════════════════
 export const dashboardApi = {
-  /** GET /api/dashboard — Get user dashboard data (name, earnings, activity) */
-  get: () =>
-    request<DashboardData>('/dashboard'),
-
-  /** GET /api/dashboard/recycler — Get recycler dashboard data from live MongoDB aggregation */
-  getRecyclerDashboard: () =>
-    request<any>('/dashboard/recycler'),
-
-  /** POST /api/dashboard/requests/:id/action — Accept or decline a pickup request */
-  requestAction: (id: string | number, action: 'accept' | 'decline') =>
-    request<{ id: string; status: string; message: string }>(
-      `/dashboard/requests/${id}/action`,
-      { method: 'POST', body: JSON.stringify({ action }) }
-    ),
-
-  /** POST /api/dashboard/wallet/payout — Process payout */
-  requestPayout: () =>
-    request<{ amount: number; message: string }>(
-      '/dashboard/wallet/payout',
-      { method: 'POST' }
-    ),
+  get: () => request<DashboardData>('/dashboard'),
+  getRecyclerDashboard: () => request<DashboardData>('/dashboard/recycler'),
+  requestAction: (id: string | number, action: 'accept' | 'decline') => 
+    request<{ success: boolean }>(`/dashboard/action/${id}`, { method: 'POST', body: JSON.stringify({ action }) }),
+  requestPayout: () => request<{ message: string }>('/dashboard/payout', { method: 'POST' }),
 };
 
-// ═══════════════════════════════════════════════════
-//  RECYCLER PROFILE API — Build profile wizard
-// ═══════════════════════════════════════════════════
 export const recyclerProfileApi = {
-  /** POST /api/recycler-profile/save — Save full recycler profile */
-  save: (data: Record<string, any>) =>
-    request<{ profileComplete: boolean }>('/recycler-profile/save', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  /** GET /api/recycler-profile/profile — Get saved recycler profile */
-  get: () =>
-    request<Record<string, any>>('/recycler-profile/profile'),
+  save: (data: Record<string, any>) => request<{ profileComplete: boolean }>('/recycler-profile/save', { method: 'POST', body: JSON.stringify(data) }),
+  get: () => request<Record<string, any>>('/recycler-profile/profile'),
 };

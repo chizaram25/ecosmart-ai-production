@@ -3,7 +3,6 @@
 import { Camera, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import { useLanguage } from "@/context/LanguageContext";
 
 type ScanCardProps = {
   handleQuickAction: (actionId: string) => void;
@@ -12,7 +11,6 @@ type ScanCardProps = {
 export default function ScanCard({ handleQuickAction }: ScanCardProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useLanguage();
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -40,10 +38,10 @@ export default function ScanCard({ handleQuickAction }: ScanCardProps) {
 
       <div className="relative z-10">
         <h2 className="text-[1.55rem] font-bold leading-tight text-white sm:text-[1.9rem]">
-          {t("common.scanYourWaste")}
+          Scan Your Waste
         </h2>
         <p className="mt-1 text-sm text-white/80 sm:text-base">
-          {t("common.identifyAndEarn")}
+          Identify and earn from recyclable waste
         </p>
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4">
@@ -53,7 +51,7 @@ export default function ScanCard({ handleQuickAction }: ScanCardProps) {
             className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 font-semibold text-[#4d973a] transition hover:scale-[1.02] sm:py-4"
           >
             <Camera className="h-5 w-5" />
-            {t("common.scanNowShort")}
+            Scan Now
           </button>
 
           <button
@@ -62,7 +60,7 @@ export default function ScanCard({ handleQuickAction }: ScanCardProps) {
             className="flex items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-4 py-3.5 font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 sm:py-4"
           >
             <Upload className="h-5 w-5" />
-            {t("common.upload")}
+            Upload
           </button>
         </div>
 

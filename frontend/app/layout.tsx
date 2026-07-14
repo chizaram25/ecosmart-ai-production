@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Manrope, Poppins } from 'next/font/google'
 import { cn } from '../lib/utils'
-import { LanguageProvider } from '../context/LanguageContext'
 import './globals.css'
 
 // 1. Configure Manrope (Primary font) with swap for instant first paint
@@ -39,9 +38,7 @@ export default function RootLayout({
           manrope.variable
         )}
       >
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        {children}
       </body>
     </html>
   )

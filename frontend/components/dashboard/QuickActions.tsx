@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import type { QuickAction } from "@/types/dashboard";
-import { useLanguage } from "@/context/LanguageContext";
 
 type QuickActionsProps = {
   quickActions: QuickAction[];
@@ -14,12 +13,11 @@ export default function QuickActions({
   handleQuickAction,
 }: QuickActionsProps) {
   const router = useRouter();
-  const { t } = useLanguage();
 
   return (
     <section>
       <h3 className="mb-4 text-xl font-semibold text-slate-900 sm:text-2xl">
-        {t("dashboard.quickActions")}
+        Quick Actions
       </h3>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

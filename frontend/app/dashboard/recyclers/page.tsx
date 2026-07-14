@@ -15,18 +15,17 @@ import {
 
 import { recyclerApi } from "@/lib/api";
 import type { RecyclerData } from "@/lib/api";
-import { useLanguage } from "@/context/LanguageContext";
 
 function RecyclersContent() {
   const searchParams = useSearchParams();
   const wasteParam = searchParams.get("waste");
-  const { t } = useLanguage();
 
   const [recyclers, setRecyclers] = useState<RecyclerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const states = useMemo(() => {
+    // 1. SAFEGUARD: Ensure recyclers is an array before mapping
     if (!Array.isArray(recyclers)) return ["Abuja", "Lagos", "Enugu", "Rivers", "Kano", "Oyo"];
     const unique = [...new Set(recyclers.map((r) => r?.state).filter(Boolean))];
     return unique.length > 0 ? unique : ["Abuja", "Lagos", "Enugu", "Rivers", "Kano", "Oyo"];
@@ -40,6 +39,7 @@ function RecyclersContent() {
     recyclerApi
       .getAll()
       .then((data) => {
+        // 2. SAFEGUARD: Strictly check that the backend gave us an array
         const validData = Array.isArray(data) ? data : [];
         setRecyclers(validData);
         if (validData.length > 0 && validData[0]?.state) {
@@ -92,19 +92,19 @@ function RecyclersContent() {
                 className="inline-flex items-center gap-2 text-base text-slate-600"
               >
                 <ArrowLeft className="h-5 w-5" />
-                {t("common.back") || "Back"}
+                Back
               </Link>
 
               {wasteParam && (
                 <div className="mt-4 rounded-2xl bg-[#eef7ea] px-4 py-3 text-sm text-[#2f7d32]">
-                  {t("dashboard.showingRecyclersFor") || "Showing recyclers for"} <strong>{wasteParam}</strong>
+                  Showing recyclers for: <strong>{wasteParam}</strong>
                 </div>
               )}
 
               <div className="mt-6 flex items-center gap-4">
                 <div className="inline-flex items-center gap-2 rounded-full bg-[#dfeedd] px-4 py-3 text-base font-semibold text-[#2f7d32]">
                   <MapPin className="h-5 w-5 text-[#f5aa00]" />
-                  {t("dashboard.location") || "Location"}
+                  Location
                 </div>
 
                 <select
@@ -125,31 +125,31 @@ function RecyclersContent() {
               </p>
 
               <section className="mt-6 overflow-hidden rounded-[22px] bg-[#eceae4]">
-                {/* FIX: Corrected Google Maps embed URL to prevent 404s */}
+                {/* 3. SAFEGUARD: Fixed string interpolation syntax from 0{ to ${ */}
                 <iframe
                   title="Recycler map"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
                     currentLocation.mapQuery
-                  )}&t=&z=12&ie=UTF8&iwloc=&output=embed`}
+                  )}&z=12&output=embed`}
                   className="h-65 w-full border-0"
                   loading="lazy"
                 />
               </section>
 
               {loading ? (
-                <div className="mt-6 text-center text-slate-500">{t("common.loadingRecyclers") || "Loading recyclers..."}</div>
+                <div className="mt-6 text-center text-slate-500">Loading recyclers...</div>
               ) : error ? (
                 <div className="mt-6 rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">{error}</div>
               ) : filteredRecyclers.length === 0 ? (
                 <div className="mt-6 rounded-3xl bg-white px-5 py-10 text-center text-slate-400 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                   <Recycle className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-                  <p>{t("dashboard.noRecyclers") || "No recyclers found in"} {selectedState} yet.</p>
+                  <p>No recyclers found in {selectedState} yet.</p>
                 </div>
               ) : (
                 <div className="mt-6 space-y-5">
                   {filteredRecyclers.map((item) => (
                     <article
-                      key={item._id || Math.random().toString()}
+                      key={item._id}
                       className="rounded-3xl bg-white px-5 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -166,6 +166,7 @@ function RecyclersContent() {
                               {item.distance || "Distance unknown"}
                             </p>
                             <p className="mt-3 text-base text-slate-400">
+                              {/* 4. SAFEGUARD: safely handle missing wasteTypes array */}
                               ♻ {Array.isArray(item.wasteTypes) ? item.wasteTypes.join(", ") : "Various Waste"}
                             </p>
                           </div>
@@ -189,14 +190,14 @@ function RecyclersContent() {
                           href={`/dashboard/recyclers/contact?recyclerId=${item._id}`}
                           className="rounded-full bg-[#6aa436] px-6 py-3 text-base font-semibold text-white shadow-md"
                         >
-                          {t("dashboard.contactRecycler") || "Contact"}
+                          Contact Recycler
                         </Link>
 
                         <Link
                           href={`/dashboard/recyclers/details?id=${item._id}`}
                           className="rounded-full border border-[#2f7d32] px-8 py-3 text-base font-semibold text-[#2f7d32]"
                         >
-                          {t("dashboard.viewDetails") || "Details"}
+                          View Details
                         </Link>
                       </div>
                     </article>
@@ -231,12 +232,10 @@ function RecyclersContent() {
 }
 
 export default function RecyclersPage() {
-  const { t } = useLanguage();
-
   return (
     <Suspense fallback={
       <main className="flex min-h-screen items-center justify-center bg-[#edf3ea]">
-        <p className="text-slate-500">{t("common.loadingRecyclers") || "Loading..."}</p>
+        <p className="text-slate-500">Loading recyclers...</p>
       </main>
     }>
       <RecyclersContent />

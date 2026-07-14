@@ -1,11 +1,7 @@
-'use client';
-
 import Link from 'next/link';
 import { Leaf } from 'lucide-react';
-import { useLanguage } from "@/context/LanguageContext";
 
 export function Footer() {
-  const { t } = useLanguage();
   return (
     <footer className="relative z-10 w-full bg-[#f1f8ee] border-t border-green-50 mt-10">
       <div className="absolute top-[-30px] left-0 w-full overflow-hidden leading-[0]">
@@ -21,13 +17,13 @@ export function Footer() {
         </div>
 
         <div className="flex gap-6 text-[13px] md:text-sm font-bold text-[#1b5030]">
-          <Link href="#" className="hover:text-[#449339] transition-colors">{t("landing.terms")}</Link>
-          <Link href="#" className="hover:text-[#449339] transition-colors">{t("landing.privacy")}</Link>
-          <Link href="#" className="hover:text-[#449339] transition-colors">{t("landing.contact")}</Link>
+          <Link href="#" className="hover:text-[#449339] transition-colors">Terms</Link>
+          <Link href="#" className="hover:text-[#449339] transition-colors">Privacy</Link>
+          <Link href="#" className="hover:text-[#449339] transition-colors">Contact</Link>
         </div>
 
         <p className="text-[12px] md:text-sm text-gray-500 font-medium md:ml-auto text-center md:text-right">
-          {t("landing.copyright")}
+          © 2024 EcoSmart AI and Innovation Ltd. All rights reserved.
         </p>
       </div>
     </footer>

@@ -1,20 +1,16 @@
-'use client';
-
 import { ScanLine, Sparkles, DollarSign } from 'lucide-react';
-import { useLanguage } from "@/context/LanguageContext";
 
 export function HowItWorks() {
-  const { t } = useLanguage();
   const steps = [
-    { num: 1, title: t("landing.step1"), icon: ScanLine },
-    { num: 2, title: t("landing.step2"), icon: Sparkles },
-    { num: 3, title: t("landing.step3"), icon: DollarSign },
+    { num: 1, title: 'Scan or upload waste.', icon: ScanLine },
+    { num: 2, title: 'Get instant analysis.', icon: Sparkles },
+    { num: 3, title: 'Recycle and earn.', icon: DollarSign },
   ];
 
   return (
     <section className="w-full max-w-6xl mx-auto px-6 mb-20 md:mb-28 relative">
       <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-900 mb-10 md:mb-16">
-        {t("landing.howItWorks")}
+        How it Works
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 relative pl-6 md:pl-0">

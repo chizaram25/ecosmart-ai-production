@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useLanguage } from "@/context/LanguageContext";
 
 function AnimatedStat({ target, suffix, label, prefix }: { target: number; suffix?: string; label: string; prefix?: string }) {
   const [count, setCount] = useState(0);
@@ -71,14 +70,13 @@ function AnimatedStat({ target, suffix, label, prefix }: { target: number; suffi
 }
 
 export function Stats() {
-  const { t } = useLanguage();
   return (
     <section className="w-full max-w-7xl mx-auto px-6 mb-16 md:mb-24">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 text-center bg-white md:bg-transparent rounded-3xl md:rounded-none shadow-sm md:shadow-none p-8 md:p-0 border md:border-none border-gray-100">
-        <AnimatedStat target={5000} suffix="+" label={t("landing.households")} />
-        <AnimatedStat target={1200} suffix="+" label={t("landing.verifiedRecyclers")} />
-        <AnimatedStat target={95} suffix="%" label={t("landing.aiAccuracy")} />
-        <AnimatedStat target={2000000} prefix="₦" suffix="+" label={t("landing.earnedByUsers")} />
+        <AnimatedStat target={5000} suffix="+" label="Households" />
+        <AnimatedStat target={1200} suffix="+" label="Verified Recyclers" />
+        <AnimatedStat target={95} suffix="%" label="AI Accuracy" />
+        <AnimatedStat target={2000000} prefix="₦" suffix="+" label="Earned by Users" />
       </div>
     </section>
   );

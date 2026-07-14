@@ -5,15 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Check, Leaf } from 'lucide-react';
 import { otpApi } from '@/lib/api';
+import { setToken, setUser } from '@/lib/auth';
 import { Toast, useToast } from '@/components/ui/Toast';
-import { useLanguage } from "@/context/LanguageContext";
 
 function EmailVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
+  // mode=verify → post-signup email verification (returns a login token).
+  // Otherwise this page is the OTP step of the password-reset flow.
+  const purpose = searchParams.get('mode') === 'verify' ? 'email-verification' : 'password-reset';
   const { toast, showToast, hideToast } = useToast();
-  const { t } = useLanguage();
 
   // OTP State
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -70,15 +72,22 @@ function EmailVerificationContent() {
 
     try {
       const otpCode = otp.join('');
-      const result = await otpApi.verify('email', email, otpCode);
+      const result = await otpApi.verify('email', email, otpCode, purpose);
       if (result.verified) {
         showToast('Verified successfully', 'success');
         // Brief delay to show the toast before navigating
         setTimeout(() => {
-          if (result.resetToken) {
+          if (purpose === 'email-verification') {
+            // Account activated — the backend hands back a login token + user.
+            if (result.token) {
+              setToken(result.token);
+              if (result.user) setUser(result.user);
+            }
+            router.push('/dashboard');
+          } else if (result.resetToken) {
             router.push(`/auth/individual/reset-password?token=${result.resetToken}`);
           } else {
-            router.push(`/auth/individual/reset-password?email=${encodeURIComponent(email)}`);
+            showToast('Could not start password reset. Please try again.', 'error');
           }
         }, 1500);
       }
@@ -98,7 +107,7 @@ function EmailVerificationContent() {
   const handleResend = async () => {
     setTimeLeft(57);
     try {
-      await otpApi.send('email', email);
+      await otpApi.send('email', email, purpose);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to resend OTP', 'error');
     }
@@ -120,9 +129,9 @@ function EmailVerificationContent() {
 
       {/* Header - Full Width Spread */}
       <header className="w-full flex justify-between items-center px-6 md:px-12 lg:px-24 pt-8 pb-4">
-        <Link href="/auth/individual/forgot-password" className="flex items-center gap-1 text-[#1b5030] hover:text-[#549B45] transition-colors font-medium text-[15px] cursor-pointer">
+        <Link href={purpose === 'email-verification' ? '/auth/individual/sign-up' : '/auth/individual/forgot-password'} className="flex items-center gap-1 text-[#1b5030] hover:text-[#549B45] transition-colors font-medium text-[15px] cursor-pointer">
           <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-          <span>{t("common.back")}</span>
+          <span>Back</span>
         </Link>
       </header>
 
@@ -148,12 +157,12 @@ function EmailVerificationContent() {
         {/* Title Section */}
         <div className="text-center mb-8 md:mb-10 w-full">
           <h1 className="text-[26px] md:text-3xl lg:text-4xl leading-tight font-bold text-[#111827] mb-4">
-            {t("common.verifyEmail")}
+            Check Your Email
           </h1>
           <p className="text-[14px] md:text-base text-gray-500 font-medium leading-relaxed">
-            {t("verifyEmail.codeSent")}<br />
+            Enter the code sent to<br />
             <span className="text-gray-900 font-bold tracking-wider">{maskEmail(email)}</span><br />
-            <span className="inline-block mt-2">{t("common.enterCodeBelow")}</span>
+            <span className="inline-block mt-2">Enter the code below to continue.</span>
           </p>
         </div>
 
@@ -189,20 +198,20 @@ function EmailVerificationContent() {
                 : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
             }`}
           >
-            {loading ? t("common.verifying") : t("common.verifyCode")}
+            {loading ? 'Verifying...' : 'Verify Code'}
           </button>
 
           {/* Resend Timer */}
           <div className="mt-8 text-center">
             <p className="text-[14px] md:text-[15px] text-gray-800 font-medium">
-              {t("common.didNotReceiveCode")}{' '}
+              Didn't receive the code?{' '}
               {timeLeft > 0 ? (
                 <span className="text-gray-500">
-                  {t("common.resendAvailableIn")} <span className="text-[#1b5030] font-bold">{timeLeft}s</span>
+                  Resend available in <span className="text-[#1b5030] font-bold">{timeLeft}s</span>
                 </span>
               ) : (
                 <button onClick={handleResend} className="text-[#549B45] font-bold hover:underline underline-offset-2 cursor-pointer">
-                  {t("common.resendNow")}
+                  Resend Now
                 </button>
               )}
             </p>
@@ -215,7 +224,7 @@ function EmailVerificationContent() {
       <footer className="w-full bg-[#f1f7ef] py-8 md:py-10 mt-auto">
         <div className="text-center">
           <p className="text-[14px] md:text-[15px] text-gray-600 font-medium">
-            {t("common.rememberPassword")} <Link href="/auth/individual/sign-in" className="font-bold text-[#1b5030] hover:text-[#549B45] transition-colors hover:underline underline-offset-2">{t("common.login")}</Link>
+            Remember password? <Link href="/auth/individual/sign-in" className="font-bold text-[#1b5030] hover:text-[#549B45] transition-colors hover:underline underline-offset-2">Login</Link>
           </p>
         </div>
       </footer>
@@ -228,7 +237,7 @@ export default function EmailVerificationPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500 font-medium">{t("common.loading")}</div>
+        <div className="text-gray-500 font-medium">Loading...</div>
       </div>
     }>
       <EmailVerificationContent />

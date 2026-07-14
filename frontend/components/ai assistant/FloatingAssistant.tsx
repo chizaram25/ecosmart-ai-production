@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import EcoChatAssistant from "./EcoChatAssistant";
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function FloatingAssistant() {
-  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -44,7 +42,7 @@ export default function FloatingAssistant() {
           <div className="flex h-full flex-col overflow-hidden rounded-[28px]">
             <div className="flex items-center justify-between border-b border-slate-200 bg-[#1f6f33] px-4 py-4 text-white">
               <div>
-                <h2 className="text-sm font-semibold">{t("assistant.mina")}</h2>
+                <h2 className="text-sm font-semibold">Mina</h2>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -69,7 +67,7 @@ export default function FloatingAssistant() {
           <div className="flex h-full flex-col overflow-hidden rounded-[28px]">
             <div className="flex items-center justify-between border-b border-slate-200 bg-[#1f6f33] px-4 py-4 text-white">
               <div>
-                <h2 className="text-sm font-semibold">{t("assistant.mina")}</h2>
+                <h2 className="text-sm font-semibold">Mina</h2>
               </div>
               <button
                 onClick={() => setOpen(false)}

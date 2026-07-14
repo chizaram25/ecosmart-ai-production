@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useLanguage } from "@/context/LanguageContext";
 
 type Message = {
   role: "user" | "assistant";
@@ -11,10 +10,15 @@ type Message = {
 const STORAGE_KEY = "ecosmart-assistant-messages";
 
 export default function EcoChatAssistant() {
-  const { t } = useLanguage();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content:
+        "Hi, I’m Mina. Ask me about recycling, waste sorting, or eco-friendly disposal.",
+    },
+  ]);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -26,14 +30,11 @@ export default function EcoChatAssistant() {
         const parsed = JSON.parse(savedMessages) as Message[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
-          return;
         }
       } catch (error) {
         console.error("Failed to parse saved assistant messages:", error);
       }
     }
-    // No saved messages — set default greeting
-    setMessages([{ role: "assistant", content: t("assistant.initialMessage") }]);
   }, []);
 
   useEffect(() => {
@@ -73,7 +74,6 @@ export default function EcoChatAssistant() {
       });
 
       const text = await res.text();
-      console.log("RAW API RESPONSE:", text);
 
       let data;
       try {
@@ -133,7 +133,7 @@ export default function EcoChatAssistant() {
           {loading && (
             <div className="max-w-[88%] rounded-2xl bg-white px-4 py-3 shadow-sm">
               <p className="mb-2 text-xs text-slate-500">
-                {t("assistant.minaIsTyping")}
+                Mina is typing
               </p>
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]" />
@@ -153,7 +153,7 @@ export default function EcoChatAssistant() {
             rows={2}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={t("assistant.placeholder")}
+            placeholder="Ask anything eco-related..."
             disabled={loading}
             className="max-h-28 min-h-12 flex-1 resize-none rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#1f6f33] focus:ring-2 focus:ring-[#1f6f33]/20 disabled:cursor-not-allowed disabled:opacity-60"
             onKeyDown={(e) => {
@@ -168,7 +168,7 @@ export default function EcoChatAssistant() {
             disabled={loading || !input.trim()}
             className="rounded-2xl bg-[#1f6f33] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#18592a] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "..." : t("assistant.send")}
+            {loading ? "..." : "Send"}
           </button>
         </div>
       </div>

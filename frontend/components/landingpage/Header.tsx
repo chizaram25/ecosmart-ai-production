@@ -2,10 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage } from "@/context/LanguageContext";
 
 export function Header() {
-  const { t } = useLanguage();
   return (
     <header className="relative z-20 w-full bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 py-3.5 md:py-4">
@@ -20,7 +18,7 @@ export function Header() {
         </Link>
         {/* The link below now tells the selection page to route to Login */}
         <Link href="/account-selection?mode=login" className="text-sm md:text-base font-bold text-[#1b5030] hover:text-[#449339] transition-colors">
-          {t("common.signIn")}
+          Sign In
         </Link>
       </div>
     </header>
