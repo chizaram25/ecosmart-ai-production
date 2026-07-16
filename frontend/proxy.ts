@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // guard just stops unauthenticated users from loading the dashboard shell.
 const TOKEN_COOKIE = 'ecosmart_token';
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const token = req.cookies.get(TOKEN_COOKIE)?.value;
 
   if (!token) {

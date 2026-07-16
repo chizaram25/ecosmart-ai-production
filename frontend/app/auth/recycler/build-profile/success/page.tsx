@@ -97,7 +97,7 @@ export default function ProfileSuccessModal() {
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/dashboard/recycler')}
             className="w-full py-4 bg-[#549B45] hover:bg-[#458237] text-white rounded-full font-bold text-[15px] shadow-lg shadow-green-900/10 transition-all hover:-translate-y-0.5 cursor-pointer"
           >
             Go to Dashboard
