@@ -3,69 +3,144 @@
 
 EcoSmart AI helps urban Nigerians make smarter waste decisions by identifying waste, guiding proper disposal, and connecting users to recyclers — enabling them to earn while reducing pollution and climate impact.
 
+A modern web application that empowers users to scan, identify, and earn from recyclable waste using AI. Built with **Next.js 16**, **React 18**, and **Tailwind CSS**.
+
 ---
 
-## 📁 Project Structure
+## Features
 
-```
-ecosmart-ai/
-├── frontend/          # Next.js PWA
-├── backend/           # Node.js REST API
-├── .github/           # CI/CD, PR & issue templates
-└── README.md
-```
+### For Individuals
+- **AI Waste Scanner** — Upload an image or describe waste to get instant classification, recyclability status, and estimated value
+- **Dashboard** — Track earnings, scan history, and eco-impact
+- **Recycler Directory** — Find verified recyclers near you
+- **Activity History** — View past scans and transactions
+- **Wallet Tracking** — Monitor earnings from recycled waste
 
-## 🚀 Getting Started
+### For Recyclers
+- **Business Registration** — Dedicated sign-up flow for recycling businesses
+- **Service Management** — Manage collection requests and grow your business
+
+### General
+- **Authentication** — Secure sign-up/sign-in with JWT
+- **Password Reset** — OTP-based reset via email or SMS
+- **AI Assistant (Mina)** — 24/7 chatbot for waste-related queries
+- **Responsive Design** — Optimized for mobile and desktop
+
+---
+
+## Getting Started
 
 ### Prerequisites
 - Node.js v18+
 - MongoDB
-- Anthropic API key
+- Backend server running (see [Ecosmart-Ai-Backend](https://github.com/Ecosmart-Ai-and-Innnovation/Ecosmart-Ai-Backend))
 
 ### Installation
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-org/ecosmart-ai.git
-cd ecosmart-ai
+# Clone the repository
+git clone https://github.com/Ecosmart-Ai-and-Innnovation/-Ecosmart-Ai-Frontend.git
+cd Ecosmart-Ai-Frontend
 
-# Install frontend deps
-cd frontend && npm install
-
-# Install backend deps
-cd ../backend && npm install
+# Install dependencies
+npm install
 ```
 
-### Running locally
+### Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+### Run the Development Server
 
 ```bash
-# Terminal 1 — Backend
-cd backend && npm run dev     # runs on :5000
-
-# Terminal 2 — Frontend
-cd frontend && npm run dev    # runs on :3000
+npm run dev
+# Opens at http://localhost:3000
 ```
 
-## 🌿 Tech Stack
+---
 
-| Layer     | Technology              |
-|-----------|-------------------------|
-| Frontend  | Next.js 14, TypeScript  |
-| Backend   | Node.js, Express        |
-| Database  | MongoDB                 |
-| AI        | Anthropic Claude API    |
-| Auth      | JWT                     |
-| Deploy    | Vercel (FE) + Railway (BE) |
+## Project Structure
 
-## 👥 Contributing
+```
+app/
+├── account-selection/        # Role selection (Individual/Recycler)
+├── api/chat/                 # AI chatbot API route
+├── auth/
+│   ├── individual/           # Individual auth flow
+│   │   ├── sign-in/
+│   │   ├── sign-up/
+│   │   ├── forgot-password/
+│   │   ├── verify-email/
+│   │   ├── verify-sms/
+│   │   └── reset-password/
+│   └── recycler/             # Recycler auth flow
+│       ├── sign-in/
+│       ├── sign-up/
+│       ├── forgot-password/
+│       ├── verify-email/
+│       ├── verify-sms/
+│       └── reset-password/
+├── dashboard/
+│   ├── activity/             # Activity history
+│   ├── profile/              # User profile
+│   ├── recyclers/            # Recycler directory
+│   └── scan/                 # Waste scanner (upload, analyze, result)
+├── layout.tsx                # Root layout
+└── page.tsx                  # Landing page
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) and the GitHub workflow below.
+components/
+├── ai assistant/             # AI chat assistant (Mina)
+├── auth/                     # Shared auth components
+├── dashboard/                # Dashboard widgets
+├── landingpage/              # Landing page sections
+├── recycler/                 # Recycler-specific components
+└── ui/                       # Reusable UI primitives
 
-### Branch Strategy
-- `main` — production-ready only
-- `develop` — integration branch
-- `feature/<name>` — new features
-- `fix/<name>` — bug fixes
+lib/
+├── api.ts                    # API client
+└── auth.ts                   # Auth helpers
 
-## 📄 License
-MIT © Evergreen Team 02 — 2026
+public/
+├── images/                   # Static images
+└── videos/                   # Demo and promotional videos
+```
+
+---
+
+## Key Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page with hero, stats, features |
+| `/account-selection` | Choose Individual or Recycler |
+| `/auth/individual/sign-in` | Individual sign in |
+| `/auth/individual/sign-up` | Individual registration |
+| `/auth/recycler/sign-in` | Recycler sign in |
+| `/auth/recycler/sign-up` | Recycler registration |
+| `/dashboard` | User dashboard overview |
+| `/dashboard/scan` | AI waste scanner |
+| `/dashboard/activity` | Scan and earnings history |
+| `/dashboard/recyclers` | Recycler directory |
+| `/dashboard/profile` | User profile settings |
+
+---
+
+## Design
+
+- **Color Palette:** Green (#449339, #549B45) and dark green (#1b5030) — reflecting eco-conscious branding
+- **Typography:** System font stack, bold and clean
+- **Responsive:** Mobile-first with adaptive layouts across all breakpoints
+- **Components:** Reusable UI system with cards, buttons, inputs, and form elements
+
+---
+
+## Built With
+
+- **Next.js** — React framework with server-side rendering
+- **Tailwind CSS** — Utility-first styling
+- **Google Gemini AI** — Integration for waste analysis
+- **TanStack Query** — Server state management
